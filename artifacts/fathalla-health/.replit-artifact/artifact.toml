@@ -1,0 +1,23 @@
+kind = "web"
+previewPath = "/"
+title = "Fathalla Health"
+description = "The user's existing Next.js healthy-shopping app with dark mode, Fathalla branding and Arabic layout fixes."
+version = "1.0.0"
+id = "artifacts/fathalla-health"
+router = "path"
+
+[[services]]
+name = "web"
+paths = ["/", "/_next/hmr"]
+localPort = 25947
+
+[services.development]
+run = "pnpm --filter @workspace/fathalla-health run dev"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/fathalla-health", "run", "build"]
+run = ["pnpm", "--filter", "@workspace/fathalla-health", "run", "start"]
+
+[services.env]
+PORT = "25947"
+BASE_PATH = "/"

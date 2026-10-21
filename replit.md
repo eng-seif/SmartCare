@@ -1,6 +1,6 @@
-# [Project name]
+# Fathalla Health
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+The user's existing Next.js healthy-shopping app, imported from their ZIP. It rates groceries against health conditions and connects to their existing Supabase database.
 
 ## Run & Operate
 
@@ -26,19 +26,26 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Preserve the imported Next.js and Supabase stack. **Why:** the user requested targeted changes to their project, not a rewrite or database migration.
+- Do not create demo products or substitute a local database when Supabase credentials are absent. Show the connection notice instead.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Home includes a real bilingual AI nutrition assistant in place of the live health monitor.
+- Chat works with general guidance without Supabase; named product recommendations must come from the connected catalog. Health profile use requires explicit opt-in. Chat state is in-memory and is cleared when the profile-sharing choice changes.
+- Product and cart results are screening guidance, not medical guarantees; missing label data triggers review instead of being treated as zero.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Add dark mode and Fathalla logos/brand colours, but keep the branding subtle ("بس مش قوي").
+- Remove Pantry / مؤن from category filter choices, not from the product catalog.
+- The referenced three screenshots were not included with the uploaded ZIP. Do not guess which sections to remove or claim the exact popup in the screenshot is fixed until it is identified.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- App workflow: `artifacts/fathalla-health: web`. App scripts are Next.js, not Vite; use its package-specific typecheck.
+- Existing Supabase connection needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`, securely configured. Without them the chatbot works for general guidance, but product/account/cart features cannot be verified.
+- Next.js owns the chatbot endpoint at `/assistant/chat`, not `/api/assistant/chat`; `/api` belongs to the separate Express artifact.
 
 ## Pointers
 
