@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { parseChatInput, chatInstructions } from '@/lib/chat-policy'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { supabaseServer } from '@/lib/supabase/server'
-import { evaluate, type Product } from '@/lib/health'
+import { ChatContextError, loadChatContext } from '@/lib/chat-context'
 import { quotaConfig, quotaSubject, reservedTokens, limitMessage, MAX_COMPLETION_TOKENS } from '@/lib/chat-quota'
 
 export const runtime = 'nodejs'
@@ -59,46 +59,9 @@ export async function POST(request: Request) {
 
   try {
     const config = quotaConfig()
-    let userId: string | undefined
-    let conditions: string[] = []
-    let limits: unknown = null
-    let catalogAvailable = false
-    let products: Product[] = []
-    let profileShared = false
-    if (isSupabaseConfigured()) {
-      const sb = await supabaseServer()
-      // Verify account identity even when profile sharing is OFF. Authentication
-      // for quotas never implies permission to read or share the health profile.
-      const { data: { user }, error: authError } = await sb.auth.getUser()
-      if (authError && authError.name !== 'AuthSessionMissingError') throw new Error('auth-unavailable')
-      userId = user?.id
-      if (input.useProfile) {
-        if (!user) return json({ error: ar ? 'سجّل الدخول لاستخدام ملفك الصحي، أو ألغِ الاختيار.' : 'Sign in to use your profile, or turn that option off.' }, 401)
-        const { data: profile, error } = await sb.from('profiles')
-          .select('conditions,max_sugar_g,max_carbs_g,max_sodium_mg').eq('id', user.id).maybeSingle()
-        if (error) throw new Error('profile-unavailable')
-        if (!profile) return json({ error: ar ? 'أكمل ملفك الصحي أولًا أو ألغِ الاختيار.' : 'Complete your health profile first, or turn the option off.' }, 409)
-        conditions = profile.conditions ?? []
-        limits = { sugar: profile.max_sugar_g, carbs: profile.max_carbs_g, sodium: profile.max_sodium_mg }
-        profileShared = true
-      }
-      const { data, error } = await sb.from('products').select('*').order('title').limit(80)
-      if (!error) { products = (data ?? []) as Product[]; catalogAvailable = true }
-    } else if (input.useProfile) {
-      return json({ error: ar ? 'ملفك الصحي غير متصل. ألغِ الاختيار لاستخدام المساعد العام.' : 'Your profile is not connected. Turn the option off for general guidance.' }, 409)
-    }
-    // Rank this bounded sample against the actual question. No model-authored inventory.
-    const terms = input.messages.at(-1)!.content.toLowerCase().split(/\s+/).filter(t => t.length > 2)
-    const score = (p: Product) => terms.reduce((s, t) => s + Number(`${p.title} ${p.category}`.toLowerCase().includes(t)), 0)
-    const catalog = [...products].sort((a, b) => score(b) - score(a)).slice(0, 24).map(p => ({
-      title: p.title, category: p.category, price: p.price, serving: p.serving_size ?? null,
-      sugar_g: p.sugar_content, carbs_g: p.net_carbs, sodium_mg: p.sodium_content,
-      gi: p.glycemic_index, gl: p.glycemic_load, saturatedFat_g: p.sat_fat_g ?? null,
-      lactoseFree: p.is_lactose_free, glutenFree: p.is_gluten_free,
-      screening: evaluate(p, conditions),
-    }))
+    const { userId, context } = await loadChatContext(isSupabaseConfigured() ? await supabaseServer() : null, input)
     const messages = [
-      { role: 'system' as const, content: chatInstructions(input.lang, { catalogAvailable, profileShared, conditions, limits, catalog }) },
+      { role: 'system' as const, content: chatInstructions(input.lang, context) },
       ...input.messages,
     ]
     // Fail closed if storage/configuration is absent. No in-memory fallback.
@@ -129,8 +92,9 @@ export async function POST(request: Request) {
     }, { timeout: 35_000, maxRetries: 0, signal: request.signal })
     const reply = response.choices[0]?.message?.content?.trim()
     if (!reply) throw new Error('empty-response')
-    return json({ reply, catalogAvailable })
-  } catch {
+    return json({ reply, catalogAvailable: context.catalogAvailable })
+  } catch (error) {
+    if (error instanceof ChatContextError) return json({ error: error.message }, error.status)
     // Do not log health information, conversation bodies, or provider credentials.
     return json({
       error: ar ? 'المساعد غير متاح مؤقتًا. تعذّر التحقق من الاستخدام أو إكمال الرد؛ حاول لاحقًا.' : 'The assistant is temporarily unavailable. Usage could not be verified or the reply could not be completed; please try later.',

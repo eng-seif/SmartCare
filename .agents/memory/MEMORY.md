@@ -1,1 +1,2 @@
 - [Chat counter storage authorization](chat-counter-storage.md) — user approved existing project PostgreSQL for usage counters only; preserve Supabase and health-data privacy.
+- [Preview hydration constraints](preview-hydration.md) — Replit adds head scripts; verify root bootstrap changes through the proxy, not just direct server responses.

@@ -1,7 +1,6 @@
 import './globals.css'
 import { Inter, JetBrains_Mono, Cairo } from 'next/font/google'
 import { cookies } from 'next/headers'
-import Script from 'next/script'
 import Translator from '@/components/Translator'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -35,12 +34,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className={`${inter.variable} ${mono.variable} ${cairo.variable}`} suppressHydrationWarning data-theme={themeCookie === 'dark' || themeCookie === 'light' ? themeCookie : undefined}>
       <head>
-        <Script id="fathalla-theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-        {lang === 'ar' && <style dangerouslySetInnerHTML={{ __html: 'body{opacity:0}' }} />}
-        {lang === 'ar' && <Script id="fathalla-language-reveal" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: 'setTimeout(function(){document.body&&(document.body.style.opacity=1)},2500)' }} />}
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" precedence="default" />
       </head>
       <body className="bg-surface font-body-md text-body-md text-on-surface antialiased">
+        {/* Parser-executed scripts stay in the body, away from preview-injected head scripts. */}
+        <script id="fathalla-theme-init" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {lang === 'ar' && <style dangerouslySetInnerHTML={{ __html: 'body{opacity:0}' }} />}
+        {lang === 'ar' && <script id="fathalla-language-reveal" dangerouslySetInnerHTML={{ __html: 'setTimeout(function(){document.body&&(document.body.style.opacity=1)},2500)' }} />}
         <Translator lang={lang} />
         <div className="min-h-[100dvh] flex flex-col bg-surface">
           {user && <LiveRefresh userId={user.id} />}
