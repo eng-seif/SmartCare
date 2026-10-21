@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./chat-quota": "./src/chat-quota.ts",
     "./schema": "./src/schema/index.ts"
   },
   "scripts": {

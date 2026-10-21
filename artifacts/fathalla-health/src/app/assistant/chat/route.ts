@@ -3,13 +3,14 @@ import { parseChatInput, chatInstructions } from '@/lib/chat-policy'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { supabaseServer } from '@/lib/supabase/server'
 import { evaluate, type Product } from '@/lib/health'
+import { quotaConfig, quotaSubject, reservedTokens, limitMessage, MAX_COMPLETION_TOKENS } from '@/lib/chat-quota'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 const buckets = new Map<string, { count: number; until: number }>()
 const MAX_BODY = 20_000
-const json = (data: object, status = 200) =>
-  NextResponse.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
+const json = (data: object, status = 200, headers: Record<string, string> = {}) =>
+  NextResponse.json(data, { status, headers: { 'Cache-Control': 'no-store', ...headers } })
 
 async function readBody(request: Request) {
   if (Number(request.headers.get('content-length')) > MAX_BODY) throw new Error('body-too-large')
@@ -57,6 +58,8 @@ export async function POST(request: Request) {
     return json({ error: ar ? 'خدمة المساعد غير متاحة حاليًا.' : 'The assistant is temporarily unavailable.' }, 503)
 
   try {
+    const config = quotaConfig()
+    let userId: string | undefined
     let conditions: string[] = []
     let limits: unknown = null
     let catalogAvailable = false
@@ -64,8 +67,12 @@ export async function POST(request: Request) {
     let profileShared = false
     if (isSupabaseConfigured()) {
       const sb = await supabaseServer()
+      // Verify account identity even when profile sharing is OFF. Authentication
+      // for quotas never implies permission to read or share the health profile.
+      const { data: { user }, error: authError } = await sb.auth.getUser()
+      if (authError && authError.name !== 'AuthSessionMissingError') throw new Error('auth-unavailable')
+      userId = user?.id
       if (input.useProfile) {
-        const { data: { user } } = await sb.auth.getUser()
         if (!user) return json({ error: ar ? 'سجّل الدخول لاستخدام ملفك الصحي، أو ألغِ الاختيار.' : 'Sign in to use your profile, or turn that option off.' }, 401)
         const { data: profile, error } = await sb.from('profiles')
           .select('conditions,max_sugar_g,max_carbs_g,max_sodium_mg').eq('id', user.id).maybeSingle()
@@ -90,20 +97,44 @@ export async function POST(request: Request) {
       lactoseFree: p.is_lactose_free, glutenFree: p.is_gluten_free,
       screening: evaluate(p, conditions),
     }))
+    const messages = [
+      { role: 'system' as const, content: chatInstructions(input.lang, { catalogAvailable, profileShared, conditions, limits, catalog }) },
+      ...input.messages,
+    ]
+    // Fail closed if storage/configuration is absent. No in-memory fallback.
+    const [{ pool }, { reserveChatUsage }] = await Promise.all([
+      import('@workspace/db'), import('@workspace/db/chat-quota'),
+    ])
+    const quota = await reserveChatUsage(pool, {
+      subject: quotaSubject(config, request.headers, userId),
+      personalLimit: userId ? config.user : config.guest,
+      projectLimit: config.project,
+      projectTokenLimit: config.tokens,
+      tokens: reservedTokens(messages),
+    })
+    if (!quota.allowed) return json({
+      error: limitMessage(input.lang, quota.scope),
+      code: quota.scope === 'project' ? 'CHAT_PROJECT_LIMIT' : 'CHAT_DAILY_LIMIT',
+      resetAt: quota.resetAt,
+    }, 429, {
+      'Retry-After': String(Math.max(1, Math.ceil((Date.parse(quota.resetAt) - Date.now()) / 1000))),
+    })
+    // Reservations are intentionally not refunded on provider failure, timeout,
+    // disconnect or retry: the provider may already have charged for the attempt.
     const { openai } = await import('@workspace/integrations-openai-ai-server')
     const response = await openai.chat.completions.create({
       model: 'gpt-5.4-mini',
-      max_completion_tokens: 8192,
-      messages: [
-        { role: 'system', content: chatInstructions(input.lang, { catalogAvailable, profileShared, conditions, limits, catalog }) },
-        ...input.messages,
-      ],
+      max_completion_tokens: MAX_COMPLETION_TOKENS,
+      messages,
     }, { timeout: 35_000, maxRetries: 0, signal: request.signal })
     const reply = response.choices[0]?.message?.content?.trim()
     if (!reply) throw new Error('empty-response')
     return json({ reply, catalogAvailable })
   } catch {
     // Do not log health information, conversation bodies, or provider credentials.
-    return json({ error: ar ? 'تعذّر الرد حاليًا. جرّب تاني بعد لحظات.' : 'The assistant could not reply. Please try again shortly.' }, 503)
+    return json({
+      error: ar ? 'المساعد غير متاح مؤقتًا. تعذّر التحقق من الاستخدام أو إكمال الرد؛ حاول لاحقًا.' : 'The assistant is temporarily unavailable. Usage could not be verified or the reply could not be completed; please try later.',
+      code: 'CHAT_UNAVAILABLE',
+    }, 503, { 'Retry-After': '60' })
   }
 }

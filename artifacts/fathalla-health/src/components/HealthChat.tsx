@@ -16,6 +16,7 @@ const T = {
     thinking: 'Thinking', error: 'Something went wrong. Please try again.', label: 'Your question',
     catOn: 'Fathalla catalog connected', catOff: 'General guidance only, catalog not connected',
     you: 'You', bot: 'Assistant', log: 'Conversation', suggestLabel: 'Suggested questions', chars: 'characters',
+    resets: 'Allowance resets:',
   },
   ar: {
     title: 'مساعد التغذية', sub: 'إرشادات عامة وليست نصيحة طبية',
@@ -28,6 +29,7 @@ const T = {
     thinking: 'جارٍ التفكير', error: 'حدث خطأ. حاول مرة أخرى.', label: 'سؤالك',
     catOn: 'كتالوج فتح الله متصل', catOff: 'إرشادات عامة فقط، الكتالوج غير متصل',
     you: 'أنت', bot: 'المساعد', log: 'المحادثة', suggestLabel: 'أسئلة مقترحة', chars: 'حرف',
+    resets: 'يتجدد الاستخدام:',
   },
 }
 
@@ -40,11 +42,17 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
   const [errorMessage, setErrorMessage] = useState('')
   const [useProfile, setUseProfile] = useState(false)
   const [catalog, setCatalog] = useState<boolean | null>(null)
+  const [quotaNotice, setQuotaNotice] = useState<{ message: string; resetAt: string } | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const busyRef = useRef(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => () => abortRef.current?.abort(), [])
+  useEffect(() => {
+    if (!quotaNotice) return
+    const timer = setTimeout(() => setQuotaNotice(null), Math.max(0, Date.parse(quotaNotice.resetAt) - Date.now()))
+    return () => clearTimeout(timer)
+  }, [quotaNotice])
   useEffect(() => { if (!profileAvailable) setUseProfile(false) }, [profileAvailable])
   useEffect(() => {
     const el = endRef.current?.parentElement
@@ -52,7 +60,7 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
   }, [messages, loading, failed])
 
   async function run(history: Msg[]) {
-    if (busyRef.current) return
+    if (busyRef.current || (quotaNotice && Date.parse(quotaNotice.resetAt) > Date.now())) return
     busyRef.current = true
     setLoading(true); setFailed(false); setErrorMessage('')
     const ctrl = new AbortController()
@@ -68,6 +76,11 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
       })
       const data = await res.json().catch(() => ({}))
       if (ctrl.signal.aborted) return
+      if (res.status === 429 && ['CHAT_DAILY_LIMIT', 'CHAT_PROJECT_LIMIT'].includes(data.code) &&
+          typeof data.error === 'string' && typeof data.resetAt === 'string' && Number.isFinite(Date.parse(data.resetAt))) {
+        setQuotaNotice({ message: data.error, resetAt: data.resetAt })
+        return
+      }
       if (!res.ok || typeof data.reply !== 'string') throw new Error(data?.error || 'error')
       setCatalog(Boolean(data.catalogAvailable))
       setMessages(m => [...m, { role: 'assistant', content: data.reply }])
@@ -87,7 +100,7 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
 
   function send(text: string) {
     const c = text.trim().slice(0, 1500)
-    if (!c || busyRef.current) return
+    if (!c || busyRef.current || (quotaNotice && Date.parse(quotaNotice.resetAt) > Date.now())) return
     const next = [...messages, { role: 'user' as const, content: c }]
     setMessages(next); setInput('')
     void run(next)
@@ -147,7 +160,7 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
       {messages.length === 0 && (
         <div role="group" aria-label={t.suggestLabel} className="flex flex-wrap gap-space-xs">
           {t.suggestions.map(s => (
-            <button key={s} type="button" onClick={() => send(s)} disabled={loading}
+            <button key={s} type="button" onClick={() => send(s)} disabled={loading || Boolean(quotaNotice)}
               className="px-space-sm py-1 rounded-full border border-surface-variant/60 bg-surface-container-lowest font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low text-start">
               {s}
             </button>
@@ -164,6 +177,13 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
         <span>{t.useProfile}<span className="block text-on-surface-variant">{profileAvailable ? t.profileNote : t.noProfile}</span></span>
       </label>
 
+      {quotaNotice && (
+        <p role="alert" className="rounded-lg bg-error-container text-on-error-container px-space-md py-space-sm font-body-sm text-body-sm">
+          {quotaNotice.message}<br />
+          {t.resets} {new Date(quotaNotice.resetAt).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB')}
+        </p>
+      )}
+
       <form onSubmit={e => { e.preventDefault(); send(input) }} className="flex items-end gap-space-sm">
         <div className="flex-1 min-w-0">
           <label htmlFor="health-chat-input" className="sr-only">{t.label}</label>
@@ -171,7 +191,7 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
             placeholder={t.placeholder} autoComplete="off"
             className="w-full h-11 px-space-md rounded-lg bg-surface-container-lowest border border-surface-variant text-on-surface font-body-md text-body-md placeholder:text-on-surface-variant" />
         </div>
-        <button type="submit" disabled={loading || !input.trim()}
+        <button type="submit" disabled={loading || Boolean(quotaNotice) || !input.trim()}
           className="h-11 px-space-md bg-primary-container text-on-secondary rounded-lg font-title-md text-title-md disabled:opacity-50 flex items-center gap-1">
           <span className="material-symbols-outlined text-xl rtl:-scale-x-100" aria-hidden="true">send</span>
           <span>{t.send}</span>

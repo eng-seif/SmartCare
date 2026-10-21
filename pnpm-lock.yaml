@@ -226,6 +226,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.117.2
         version: 2.118.0
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../../lib/db
       '@workspace/integrations-openai-ai-server':
         specifier: workspace:*
         version: link:../../lib/integrations-openai-ai-server
@@ -269,6 +272,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.14
         version: 4.3.3
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.13
       typescript:
         specifier: ~5.9.3
         version: 5.9.3

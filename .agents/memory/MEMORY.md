@@ -1,0 +1,1 @@
+- [Chat counter storage authorization](chat-counter-storage.md) — user approved existing project PostgreSQL for usage counters only; preserve Supabase and health-data privacy.
