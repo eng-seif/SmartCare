@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "asEiSiodnG7j_zvv52wcm"
+uri = "file://generated-artifacts/fathalla-health-source.zip"
+type = "unspecified"
+title = "Fathalla Health — Source Code"
+description = "Complete current project source with setup instructions, shared packages, tests and assets. Excludes secrets, database contents, dependencies and build outputs."
+logical_id = "5edf8c3e-9bbb-4011-b475-7c8397020430"
+content_hash = "sha256:4bee81a925273e59ccd40518039983d2f008a76c2130cba200c5df8c7b40a3d2"
+size = 352953
+mtime_ms = 1792656225432
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/5edf8c3e-9bbb-4011-b475-7c8397020430/6a31b70a-fe85-4ecf-8730-46c2da4e723c"
+storage_version_token = "1792656231367234"
+content_type = "application/octet-stream"
