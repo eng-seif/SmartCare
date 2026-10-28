@@ -7,9 +7,9 @@ export type RefreshLang = 'ar' | 'en'
 export type DemoProduct = { id: number; ar: string; en: string; catAr: string; catEn: string; detailsAr: string; detailsEn: string; price: string; badge: 'good' | 'caution' | 'missing'; reasonAr: string; reasonEn: string; art: string; bg: string; light: string; icon: typeof Apple }
 
 export const demoProducts: DemoProduct[] = [
-  { id: 1, ar: 'زبادي طبيعي', en: 'Plain yoghurt', catAr: 'ألبان', catEn: 'Dairy', detailsAr: 'عبوة ٤٠٠ جم', detailsEn: '400 g tub', price: '٣٨', badge: 'good', reasonAr: 'بيانات الملصق متاحة للفحص الأولي', reasonEn: 'Label data available for an initial screen', art: '#c8dcae', bg: '#e7f0df', light: '#fbfff2', icon: Apple },
+  { id: 1, ar: 'زبادي طبيعي', en: 'Plain yoghurt', catAr: 'ألبان', catEn: 'Dairy', detailsAr: 'عبوة ٤٠٠ جم', detailsEn: '400 g tub', price: '٣٨', badge: 'good', reasonAr: 'بيانات الملصق متاحة للفحص الأولي', reasonEn: 'Label data available for an initial screen', art: '#a5c5f2', bg: '#e3edfc', light: '#f6faff', icon: Apple },
   { id: 2, ar: 'شوفان كامل', en: 'Whole oats', catAr: 'حبوب', catEn: 'Grains', detailsAr: 'عبوة ٥٠٠ جم', detailsEn: '500 g pack', price: '٥٢', badge: 'caution', reasonAr: 'الكمية لكل حصة مهمة عند المقارنة', reasonEn: 'Serving size matters when comparing', art: '#bda375', bg: '#eee8d9', light: '#fff9ea', icon: Wheat },
-  { id: 3, ar: 'فول مدمس', en: 'Fava beans', catAr: 'معلبات', catEn: 'Canned', detailsAr: 'علبة ٤٠٠ جم', detailsEn: '400 g tin', price: '٢٤', badge: 'missing', reasonAr: 'بيانات الصوديوم غير متاحة — راجع العبوة', reasonEn: 'Sodium is not listed — check the pack', art: '#b6bb77', bg: '#edf0d9', light: '#fbfce9', icon: Apple },
+  { id: 3, ar: 'فول مدمس', en: 'Fava beans', catAr: 'معلبات', catEn: 'Canned', detailsAr: 'علبة ٤٠٠ جم', detailsEn: '400 g tin', price: '٢٤', badge: 'missing', reasonAr: 'بيانات الصوديوم غير متاحة — راجع العبوة', reasonEn: 'Sodium is not listed — check the pack', art: '#b9b5db', bg: '#edebf8', light: '#faf9ff', icon: Apple },
   { id: 4, ar: 'خبز حبوب كاملة', en: 'Wholegrain bread', catAr: 'مخبوزات', catEn: 'Bakery', detailsAr: 'عبوة ٦ شرائح', detailsEn: '6 slices', price: '٣٤', badge: 'caution', reasonAr: 'قارن الكربوهيدرات وحجم الحصة', reasonEn: 'Compare carbs and serving size', art: '#bf8a5c', bg: '#f2e5d7', light: '#fff6ec', icon: Wheat },
 ]
 
