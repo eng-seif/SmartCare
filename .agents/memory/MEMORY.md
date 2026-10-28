@@ -3,3 +3,4 @@
 - [Unpatched glob dependencies](glob-security.md) — temporary Next lint glob replacement must preserve path semantics; remove its alias and patch together once upstream is safe.
 - [Flutter and design approval](mobile-redesign-approval.md) — preview web/mobile before applying changes; user requires Flutter and a downloadable APK, not an Expo substitute.
 - [Flutter Android toolchain](flutter-android-toolchain.md) — Flutter installs through Nix here; Android SDK needs a separate official command-line setup, not a Replit language module.
+- [Dependency remediation](dependency-remediation.md) — catalog upgrades can leave vulnerable transitive versions; verify the entire resolved graph.
