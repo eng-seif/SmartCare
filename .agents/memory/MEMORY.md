@@ -1,3 +1,4 @@
 - [Chat counter storage authorization](chat-counter-storage.md) — user approved existing project PostgreSQL for usage counters only; preserve Supabase and health-data privacy.
 - [Preview hydration constraints](preview-hydration.md) — Replit adds head scripts; verify root bootstrap changes through the proxy, not just direct server responses.
 - [Unpatched glob dependencies](glob-security.md) — temporary Next lint glob replacement must preserve path semantics; remove its alias and patch together once upstream is safe.
+- [Flutter and design approval](mobile-redesign-approval.md) — preview web/mobile before applying changes; user requires Flutter and a downloadable APK, not an Expo substitute.
