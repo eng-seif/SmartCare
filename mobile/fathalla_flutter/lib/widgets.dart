@@ -25,64 +25,65 @@ class ProductTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = product, s = store, result = screen(p: product, s: store);
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => showProduct(context, s, p),
-        child: Padding(
-          padding: const EdgeInsets.all(13),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      p['title']?.toString() ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: productImage(p, borderRadius: BorderRadius.zero),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p['title']?.toString() ?? '',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${p['category'] ?? ''} · ${p['serving_size'] ?? s.t('راجع العبوة', 'Check pack')}',
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                  const SizedBox(height: 8),
+                  VerdictChip(result: result, store: s),
+                  const SizedBox(height: 7),
+                  Text(
+                    result.reasons.first,
+                    style: const TextStyle(fontSize: 10),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${nutrient(p['price'])} ${s.t('ج.م', 'EGP')}',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${p['category'] ?? ''} · ${p['serving_size'] ?? s.t('راجع العبوة', 'Check pack')}',
-                      style: const TextStyle(fontSize: 10),
-                    ),
-                    const SizedBox(height: 8),
-                    VerdictChip(result: result, store: s),
-                    const SizedBox(height: 7),
-                    Text(
-                      result.reasons.first,
-                      style: const TextStyle(fontSize: 10),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${nutrient(p['price'])} ${s.t('ج.م', 'EGP')}',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: s.writing
-                              ? null
-                              : () => addProduct(context, s, p),
-                          icon: const Icon(Icons.add_shopping_cart, size: 16),
-                          label: Text(s.t('للسلة', 'Add')),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      TextButton.icon(
+                        onPressed: s.writing
+                            ? null
+                            : () => addProduct(context, s, p),
+                        icon: const Icon(Icons.add_shopping_cart, size: 16),
+                        label: Text(s.t('للسلة', 'Add')),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              SizedBox(width: 70, height: 95, child: productImage(p)),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -95,12 +96,30 @@ class ProductTile extends StatelessWidget {
 ScreenResult evaluateProduct(DataRow p, Store s) =>
     screen(p, s.conditions, s.ar);
 
-Widget productImage(DataRow p) {
-  final url = p['image_url']?.toString();
+Uri? productImageUri(String? value, {String base = apiBase}) {
+  final raw = value?.trim() ?? '';
+  if (raw.isEmpty) return null;
+  final uri = Uri.tryParse(raw);
+  if (uri == null) return null;
+  final resolved = uri.hasScheme ? uri : Uri.tryParse(base)?.resolveUri(uri);
+  if (resolved == null ||
+      !['https', 'http'].contains(resolved.scheme) ||
+      resolved.host.isEmpty) {
+    return null;
+  }
+  return resolved;
+}
+
+Widget productImage(
+  DataRow p, {
+  BoxFit fit = BoxFit.cover,
+  BorderRadius borderRadius = const BorderRadius.all(Radius.circular(14)),
+}) {
+  final url = productImageUri(p['image_url']?.toString());
   final fallback = Container(
     decoration: BoxDecoration(
       color: const Color(0xFFE8DDCB),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: borderRadius,
     ),
     child: const Icon(
       Icons.inventory_2_outlined,
@@ -108,13 +127,21 @@ Widget productImage(DataRow p) {
       size: 33,
     ),
   );
-  return url == null || url.isEmpty
+  return url == null
       ? fallback
       : ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: borderRadius,
           child: Image.network(
-            url,
-            fit: BoxFit.contain,
+            url.toString(),
+            width: double.infinity,
+            height: double.infinity,
+            fit: fit,
+            semanticLabel: p['title']?.toString(),
+            loadingBuilder: (context, child, progress) => progress == null
+                ? child
+                : const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
             errorBuilder: (_, __, ___) => fallback,
           ),
         );
@@ -192,7 +219,7 @@ Future<void> showProduct(
           ],
         ),
         const SizedBox(height: 12),
-        SizedBox(height: 130, child: productImage(p)),
+        SizedBox(height: 180, child: productImage(p, fit: BoxFit.contain)),
         const SizedBox(height: 15),
         Text(
           '${s.t('الحصة', 'Serving')}: ${p['serving_size'] ?? s.t('غير متاحة — راجع العبوة', 'Unknown — check the pack')}',

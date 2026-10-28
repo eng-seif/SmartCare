@@ -197,6 +197,14 @@ class BasketPage extends StatelessWidget {
                         children: [
                           InkWell(
                             onTap: () => showProduct(context, s, p),
+                            child: AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: productImage(p),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          InkWell(
+                            onTap: () => showProduct(context, s, p),
                             child: Text(
                               p['title'] as String,
                               style: const TextStyle(

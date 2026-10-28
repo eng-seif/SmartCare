@@ -28,3 +28,17 @@ mtime_ms = 1793205748405
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/b7e04f97-6a90-4081-99f7-796ab37a1653/421a1e9c-8521-430e-9573-cce37028420b"
 storage_version_token = "1793206194525299"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ns-c7KKSompzWieNmirrC"
+uri = "file://generated-artifacts/fathalla-health-1.0.1-arm64.apk"
+type = "unspecified"
+title = "تحديث تطبيق فتح الله 1.0.1 — إصلاح الصور"
+description = "صور واضحة في سلة Flutter، وصور كروت السوق بكامل العرض. APK لهواتف ARM64، نحو 41 MB، بنفس توقيع النسخة السابقة للتحديث فوقها دون إزالة التطبيق."
+logical_id = "f8372a95-649d-44ce-8bb9-072aaa3299d8"
+content_hash = "sha256:0eada7e0d0f71a6fcd117536c8d248d0f019271c6d2ec54fc594d4533a9cdeb5"
+size = 41034154
+mtime_ms = 1793208718525
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/f8372a95-649d-44ce-8bb9-072aaa3299d8/a9885fc7-7842-4612-ae9f-8c8f6f05d8a5"
+storage_version_token = "1793208773425534"
+content_type = "application/octet-stream"

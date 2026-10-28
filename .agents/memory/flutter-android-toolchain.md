@@ -11,6 +11,6 @@ The absence of a Flutter language module does not mean Flutter APKs cannot be bu
 
 Native Android release compilation may exhaust this workspace's memory even though source analysis and widget tests pass. Avoid compiling Android and running the web preview or web production build concurrently.
 
-**Why:** Android's Gradle daemon was killed by the environment's memory limit while compiling release artifacts.
+**Why:** Android's Gradle daemon was killed by the environment's memory limit while compiling release artifacts. A foreground shell connection also dropped during a later native build while an older APK was still present.
 
-**How to apply:** Constrain Gradle workers and compiler memory, then verify the emitted APK's signature and package metadata. If repeated builds fail, do not infer success solely from a file appearing on disk; report the limitation unless the final APK is independently validated.
+**How to apply:** Constrain Gradle workers and compiler memory. Prefer background shell tasks for long native builds and require their completion result, then verify the emitted APK's signature and package metadata, including its version. If repeated builds fail, do not infer success solely from a file appearing on disk; report the limitation unless the final APK is independently validated.
