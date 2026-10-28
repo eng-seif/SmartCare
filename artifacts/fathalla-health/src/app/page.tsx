@@ -1,12 +1,13 @@
 import { supabaseServer } from '@/lib/supabase/server'
-import MarketClient from '@/components/MarketClient'
+import MarketClient from '@/components/MarketRefresh'
 import { type Product } from '@/lib/health'
 import { assessCart } from '@/lib/cart-status'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import ConnectionNotice from '@/components/ConnectionNotice'
 import { cookies } from 'next/headers'
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q = '' } = await searchParams
   const lang = (await cookies()).get('lang')?.value === 'ar' ? 'ar' : 'en'
   if (!isSupabaseConfigured()) {
     return <>
@@ -38,5 +39,5 @@ export default async function Home() {
       { label: 'Sodium', value: a.t.sodium, max: lim.sodium, unit: 'mg' },
     ],
   }
-  return <MarketClient lang={lang} rows={(rows ?? []) as Product[]} conditions={conditions} monitor={monitor} />
+  return <MarketClient lang={lang} rows={(rows ?? []) as Product[]} conditions={conditions} monitor={monitor} initialQuery={q.slice(0, 200)} />
 }

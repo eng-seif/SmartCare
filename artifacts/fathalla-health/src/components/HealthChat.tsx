@@ -139,7 +139,9 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
 
       <div role="log" aria-label={t.log} aria-live="polite"
         className={`${compact ? 'h-56' : 'h-72'} overflow-y-auto flex flex-col gap-space-sm bg-surface-container-low rounded-xl border border-surface-variant/40 p-space-sm`}>
-        <div className="max-w-[90%] self-start rounded-xl rounded-ss-sm bg-surface-container-lowest border border-surface-variant/40 px-space-md py-space-sm font-body-md text-body-md text-on-surface">{t.intro}</div>
+        <div className="max-w-[90%] self-start rounded-xl rounded-ss-sm bg-surface-container-lowest border border-surface-variant/40 px-space-md py-space-sm font-body-md text-body-md text-on-surface">{compact
+          ? (lang === 'ar' ? 'أشرح ملصقات الأغذية وأساعدك تقارن المنتجات. إرشاد عام، مش تشخيص أو ضمان لملاءمة الطعام؛ ارجع لطبيبك.' : 'I can explain labels and compare foods. General guidance, not a diagnosis or safety guarantee; ask your doctor about your care.')
+          : t.intro}</div>
         {messages.map((m, i) => (
           <div key={i} className={`max-w-[90%] rounded-xl px-space-md py-space-sm font-body-md text-body-md whitespace-pre-wrap break-words ${m.role === 'user'
             ? 'self-end rounded-se-sm bg-primary-container text-on-secondary'
@@ -159,7 +161,7 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
 
       {messages.length === 0 && (
         <div role="group" aria-label={t.suggestLabel} className="flex flex-wrap gap-space-xs">
-          {t.suggestions.map(s => (
+          {(compact ? t.suggestions.slice(0, 2) : t.suggestions).map(s => (
             <button key={s} type="button" onClick={() => send(s)} disabled={loading || Boolean(quotaNotice)}
               className="px-space-sm py-1 rounded-full border border-surface-variant/60 bg-surface-container-lowest font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low text-start">
               {s}
@@ -168,14 +170,14 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
         </div>
       )}
 
-      <label className={`flex items-start gap-space-sm font-body-sm text-body-sm ${profileAvailable ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+      {(!compact || profileAvailable) && <label className={`flex items-start gap-space-sm font-body-sm text-body-sm ${profileAvailable ? 'text-on-surface' : 'text-on-surface-variant'}`}>
         <input type="checkbox" className="mt-0.5" checked={useProfile} disabled={!profileAvailable} onChange={e => {
           const checked = e.target.checked
           clear()
           setUseProfile(checked)
         }} />
         <span>{t.useProfile}<span className="block text-on-surface-variant">{profileAvailable ? t.profileNote : t.noProfile}</span></span>
-      </label>
+      </label>}
 
       {quotaNotice && (
         <p role="alert" className="rounded-lg bg-error-container text-on-error-container px-space-md py-space-sm font-body-sm text-body-sm">

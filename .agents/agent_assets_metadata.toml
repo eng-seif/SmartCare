@@ -14,3 +14,17 @@ mtime_ms = 1792656225432
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/5edf8c3e-9bbb-4011-b475-7c8397020430/6a31b70a-fe85-4ecf-8730-46c2da4e723c"
 storage_version_token = "1792656231367234"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "29fFaqD0nOTntXXRpvnv8"
+uri = "file://generated-artifacts/fathalla-health-android-arm64.apk"
+type = "unspecified"
+title = "تطبيق فتح الله للأندرويد — APK"
+description = "تطبيق Flutter بالألوان الفحمي والرملية، للهواتف ARM64 من Android 6 فأحدث. الحجم نحو 41 MB. يحتاج نشر تحديث الموقع أولًا للاتصال بالمنتجات والحسابات والمساعد."
+logical_id = "b7e04f97-6a90-4081-99f7-796ab37a1653"
+content_hash = "sha256:1cb4883c1d1e873c0847a0e23d71fdf0fc133d6f6f203d6ea6f1dddc0453379b"
+size = 41034153
+mtime_ms = 1793205748405
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/b7e04f97-6a90-4081-99f7-796ab37a1653/421a1e9c-8521-430e-9573-cce37028420b"
+storage_version_token = "1793206194525299"
+content_type = "application/octet-stream"

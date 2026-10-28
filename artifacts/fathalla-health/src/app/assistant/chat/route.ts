@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { parseChatInput, chatInstructions } from '@/lib/chat-policy'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { supabaseServer } from '@/lib/supabase/server'
@@ -32,6 +33,9 @@ async function readBody(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const authorization = request.headers.get('authorization')
+  if (authorization && !/^Bearer \S+$/i.test(authorization)) return json({ error: 'Invalid authorization.' }, 401)
+  const accessToken = authorization?.slice(7)
   const origin = request.headers.get('origin')
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
   try {
@@ -59,7 +63,13 @@ export async function POST(request: Request) {
 
   try {
     const config = quotaConfig()
-    const { userId, context } = await loadChatContext(isSupabaseConfigured() ? await supabaseServer() : null, input)
+    const sb = !isSupabaseConfigured() ? null : accessToken
+      ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        global: { headers: { Authorization: `Bearer ${accessToken}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      })
+      : await supabaseServer()
+    const { userId, context } = await loadChatContext(sb, input, accessToken)
     const messages = [
       { role: 'system' as const, content: chatInstructions(input.lang, context) },
       ...input.messages,

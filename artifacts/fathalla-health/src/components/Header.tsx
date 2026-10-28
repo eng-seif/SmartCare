@@ -14,32 +14,32 @@ import LangToggle from './LangToggle'
       const currentPath = usePathname();
 
       const navItems = [
-        { label: "Healthy Market", path: "/" },
-        { label: "Barcode Scanner", path: "/scanner" },
-        { label: "Health Profile & Smart Cart", path: "/cart" }
+        { label: lang === 'ar' ? 'السوق' : 'Market', path: "/" },
+        { label: lang === 'ar' ? 'الماسح' : 'Scanner', path: "/scanner" },
+        { label: lang === 'ar' ? 'السلة' : 'Basket', path: "/cart" }
       ];
 
       return (
-        <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(17,24,39,0.04)]">
+        <header className="fh-site-header fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(17,24,39,0.04)]">
           <div className="h-20 w-full max-w-[1440px] mx-auto px-3 sm:px-4 md:px-margin-desktop flex items-center justify-between gap-2 sm:gap-space-lg">
             <Link href="/" aria-label="Fathalla Healthy Market" className="flex items-center gap-space-sm shrink-0">
               <BrandLogo size={40} />
-              <div className="hidden min-[400px]:flex flex-col">
-                <span className="font-title-lg text-title-lg text-on-surface tracking-tight leading-none">Fathalla</span>
-                <span className="font-label-sm text-label-sm text-primary uppercase tracking-wider font-semibold">Healthy Market</span>
+              <div className="fh-brand-copy flex flex-col">
+                <span className="font-title-lg text-title-lg text-on-surface tracking-tight leading-none">{lang === 'ar' ? 'فتح الله' : 'Fathalla'}</span>
+                <span className="font-label-sm text-label-sm text-primary font-semibold">{lang === 'ar' ? 'سوق يهتم باختياراتك' : 'Your everyday market'}</span>
               </div>
             </Link>
 
-            <div className="flex-1 max-w-md hidden xl:block">
+            <form action="/" role="search" className="flex-1 max-w-md hidden xl:block">
               <div className="relative flex items-center">
                 <span className="material-symbols-outlined absolute left-space-md text-secondary text-lg pointer-events-none">search</span>
-                <input 
+                <input name="q" aria-label={lang === 'ar' ? 'بحث في السوق' : 'Search the market'}
                   className="w-full h-11 pl-11 pr-space-md bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-primary transition-all" 
-                  placeholder="Search groceries, GI score, zero sugar..." 
-                  type="text"
+                  placeholder={lang === 'ar' ? 'ابحث عن منتج أو عنصر غذائي' : 'Search products or ingredients'}
+                  type="search"
                 />
               </div>
-            </div>
+            </form>
 
             <nav className="hidden lg:flex items-center gap-space-xs">
               {navItems.map(item => {

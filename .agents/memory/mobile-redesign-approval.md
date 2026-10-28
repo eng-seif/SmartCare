@@ -13,4 +13,4 @@ The user selected “فحمي ورملي” (charcoal and sand) as the color dir
 
 **Why:** The user chose that palette from the visual color cards.
 
-**How to apply:** Keep web and mobile colors consistent with this direction unless the user changes it. A palette selection does not replace the requested review of the full visual preview before implementation.
+**How to apply:** Keep web and mobile colors consistent with this direction unless the user changes it. The user reviewed both full previews and explicitly approved implementing this design for web and Flutter; do not ask for approval again for the same approved design.

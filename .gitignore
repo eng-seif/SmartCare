@@ -49,3 +49,11 @@ Thumbs.db
 .cache/
 .local/
 /generated-artifacts/
+/mobile/**/.dart_tool/
+/mobile/**/build/
+/mobile/**/.flutter-plugins*
+/mobile/**/android/.gradle/
+/mobile/**/android/local.properties
+/mobile/**/android/key.properties
+/mobile/**/*.jks
+/mobile/**/*.keystore

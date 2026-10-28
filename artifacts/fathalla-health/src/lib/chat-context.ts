@@ -7,7 +7,7 @@ export class ChatContextError extends Error {
 }
 
 /** Read-only, request-scoped context. Verified identity does not imply profile consent. */
-export async function loadChatContext(sb: SupabaseClient | null, input: ChatInput) {
+export async function loadChatContext(sb: SupabaseClient | null, input: ChatInput, accessToken?: string) {
   const ar = input.lang === 'ar'
   let userId: string | undefined
   let conditions: string[] = []
@@ -16,7 +16,10 @@ export async function loadChatContext(sb: SupabaseClient | null, input: ChatInpu
   let products: Product[] = []
   let profileShared = false
   if (sb) {
-    const { data: { user }, error: authError } = await sb.auth.getUser()
+    const { data: { user }, error: authError } = accessToken
+      ? await sb.auth.getUser(accessToken)
+      : await sb.auth.getUser()
+    if (accessToken && (authError || !user)) throw new ChatContextError(401, ar ? 'انتهت جلسة الدخول. سجّل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.')
     // Never downgrade a failed account verification to a fresh guest quota.
     if (authError && authError.name !== 'AuthSessionMissingError') throw new Error('auth-unavailable')
     userId = user?.id

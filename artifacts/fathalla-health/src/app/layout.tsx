@@ -1,4 +1,5 @@
 import './globals.css'
+import './market-refresh.css'
 import { Inter, JetBrains_Mono, Cairo } from 'next/font/google'
 import { cookies } from 'next/headers'
 import Translator from '@/components/Translator'
@@ -42,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {lang === 'ar' && <style dangerouslySetInnerHTML={{ __html: 'body{opacity:0}' }} />}
         {lang === 'ar' && <script id="fathalla-language-reveal" dangerouslySetInnerHTML={{ __html: 'setTimeout(function(){document.body&&(document.body.style.opacity=1)},2500)' }} />}
         <Translator lang={lang} />
-        <div className="min-h-[100dvh] flex flex-col bg-surface">
+        <div className="fh-refresh min-h-[100dvh] flex flex-col bg-surface">
           {user && <LiveRefresh userId={user.id} />}
           <Header lang={lang} cartCount={cartCount} user={user ? { name: prof?.full_name ?? '', email: user.email ?? '' } : null} />
           <main className="w-full pt-20 pb-16 lg:pb-0 bg-surface flex-1">{children}</main>

@@ -6,6 +6,30 @@ import { chatInstructions, type ChatInput } from '../src/lib/chat-policy'
 import type { Product } from '../src/lib/health'
 
 const input: ChatInput = { messages: [{ role: 'user', content: 'قارن actual milk' }], lang: 'ar', useProfile: false }
+
+test('native bearer identity is verified with Supabase, not trusted from a client identifier', async () => {
+  const f = fixture()
+  let received: string | undefined
+  f.client.auth.getUser = (async (token?: string) => {
+    received = token
+    return { data: { user: { id: 'verified-native-user' } }, error: null }
+  }) as typeof f.client.auth.getUser
+  const result = await loadChatContext(f.client, input, 'test-bearer')
+  assert.equal(received, 'test-bearer')
+  assert.equal(result.userId, 'verified-native-user')
+  assert.equal(result.context.profileShared, false)
+  assert.ok(!f.reads.some(r => r.table === 'profiles'))
+})
+
+test('invalid native bearer cannot silently downgrade into an anonymous quota', async () => {
+  const f = fixture()
+  f.client.auth.getUser = (async () => ({
+    data: { user: null }, error: { name: 'AuthApiError', message: 'invalid' },
+  })) as typeof f.client.auth.getUser
+  await assert.rejects(() => loadChatContext(f.client, input, 'invalid-bearer'),
+    (e: unknown) => e instanceof ChatContextError && e.status === 401)
+  assert.equal(f.reads.length, 0)
+})
 const product: Product = {
   id: 'fixture', title: 'Actual milk', category: 'Dairy', barcode: null, price: 40, image_url: null,
   glycemic_index: null, glycemic_load: null, sugar_content: null, net_carbs: 12, sodium_content: 0,

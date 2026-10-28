@@ -59,7 +59,7 @@ export default function Scanner() {
             <div className="relative z-10 w-64 h-44 sm:w-80 sm:h-52">
               {['top-0 left-0 border-t-2 border-l-2 rounded-tl-sm', 'top-0 right-0 border-t-2 border-r-2 rounded-tr-sm', 'bottom-0 left-0 border-b-2 border-l-2 rounded-bl-sm', 'bottom-0 right-0 border-b-2 border-r-2 rounded-br-sm']
                 .map(c => <div key={c} className={`absolute w-6 h-6 border-primary-container ${c}`}></div>)}
-              <div className="absolute top-1/2 w-full h-0.5 bg-gradient-to-r from-transparent via-primary-container to-transparent shadow-[0_0_12px_#ff6b00] animate-[bounce_2.5s_infinite]"></div>
+              <div className="absolute top-1/2 w-full h-0.5 bg-gradient-to-r from-transparent via-primary-container to-transparent animate-[bounce_2.5s_infinite]" style={{ boxShadow: '0 0 12px var(--color-primary-container)' }}></div>
             </div>
           </div>
           <div className="flex items-center gap-space-sm px-space-md py-space-sm bg-surface-container-low rounded-lg">
