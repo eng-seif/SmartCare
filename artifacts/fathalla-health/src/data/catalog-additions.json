@@ -1,0 +1,26 @@
+{
+  "observedAt": "2026-11-07",
+  "notes": "Reference retail prices, not verified Fathalla prices or stock. AI-generated generic produce photographs. Unverified nutrition remains null. The database requires barcodes, so fresh produce uses explicitly internal EAN-13 codes in the restricted-circulation 20 prefix, not manufacturer identifiers.",
+  "products": [
+    {"slug":"fresh-tomatoes","title":"Fresh Tomatoes (500 g)","ar":"طماطم طازجة (٥٠٠ جم)","category":"Vegetables","price":16.25,"pack":"500 g raw","sheet":1,"cell":0,"source":"https://www.carrefouregypt.com/mafegy/en/tomato/a-tomato-local/p/32631"},
+    {"slug":"fresh-cucumbers","title":"Fresh Cucumbers (500 g)","ar":"خيار طازج (٥٠٠ جم)","category":"Vegetables","price":18.25,"pack":"500 g raw","sheet":1,"cell":1,"source":"https://www.carrefouregypt.com/mafegy/en/cucumber/a-cucumber/p/32594"},
+    {"slug":"fresh-carrots","title":"Fresh Carrots (500 g)","ar":"جزر طازج (٥٠٠ جم)","category":"Vegetables","price":20,"pack":"500 g raw","sheet":1,"cell":2,"source":"https://www.carrefouregypt.com/mafegy/en/carrot/a-carrot/p/32634"},
+    {"slug":"fresh-broccoli","title":"Fresh Broccoli (500 g)","ar":"بروكلي طازج (٥٠٠ جم)","category":"Vegetables","price":20,"pack":"500 g raw","sheet":1,"cell":3,"source":"https://www.carrefouregypt.com/mafegy/en/cabbage/brocolli/p/32820"},
+    {"slug":"fresh-zucchini","title":"Fresh Zucchini (500 g)","ar":"كوسة طازجة (٥٠٠ جم)","category":"Vegetables","price":22,"pack":"500 g raw","sheet":2,"cell":0,"source":"https://www.carrefouregypt.com/mafegy/en/zucchini/a-zucchini/p/32609"},
+    {"slug":"fresh-potatoes","title":"Fresh Potatoes (500 g)","ar":"بطاطس طازجة (٥٠٠ جم)","category":"Vegetables","price":17,"pack":"500 g raw","sheet":2,"cell":1,"source":"https://www.carrefouregypt.com/mafegy/en/potato/a-potato-for-cooking/p/32750"},
+    {"slug":"fresh-sweet-potatoes","title":"Fresh Sweet Potatoes (500 g)","ar":"بطاطا طازجة (٥٠٠ جم)","category":"Vegetables","price":7.5,"pack":"500 g raw","sheet":2,"cell":2,"source":"https://www.carrefouregypt.com/mafegy/en/potato/a-potato-sweet/p/32882"},
+    {"slug":"fresh-red-onions","title":"Fresh Red Onions (500 g)","ar":"بصل أحمر طازج (٥٠٠ جم)","category":"Vegetables","price":17,"pack":"500 g raw","sheet":2,"cell":3,"source":"https://www.carrefouregypt.com/mafegy/en/onions/a-onion-red/p/32762"},
+    {"slug":"fresh-eggplants","title":"Fresh Eggplants (500 g)","ar":"باذنجان طازج (٥٠٠ جم)","category":"Vegetables","price":10,"pack":"500 g raw","sheet":3,"cell":0,"source":"https://www.carrefouregypt.com/mafegy/en/eggplant/a-eggplant-big-size/p/32606"},
+    {"slug":"fresh-green-beans","title":"Fresh Green Beans (500 g)","ar":"فاصوليا خضراء طازجة (٥٠٠ جم)","category":"Vegetables","price":19,"pack":"500 g raw","sheet":3,"cell":1,"source":"https://www.carrefouregypt.com/mafegy/en/beans-peas/a-green-bean/p/32645"},
+    {"slug":"fresh-bananas","title":"Fresh Bananas (500 g)","ar":"موز طازج (٥٠٠ جم)","category":"Fruits","price":25,"pack":"500 g raw","sheet":3,"cell":2,"source":"https://www.carrefouregypt.com/mafegy/en/banana/a-banana-local/p/458546"},
+    {"slug":"fresh-red-apples","title":"Fresh Red Apples (500 g)","ar":"تفاح أحمر طازج (٥٠٠ جم)","category":"Fruits","price":49.5,"pack":"500 g raw","sheet":3,"cell":3,"source":"https://www.carrefouregypt.com/mafegy/en/apple/a-apple-red/p/369185"},
+    {"slug":"fresh-green-apples","title":"Fresh Green Apples (500 g)","ar":"تفاح أخضر طازج (٥٠٠ جم)","category":"Fruits","price":70,"pack":"500 g raw","sheet":4,"cell":0,"source":"https://www.carrefouregypt.com/mafegy/en/apple/a-apple-green-import/p/283461"},
+    {"slug":"fresh-oranges","title":"Fresh Oranges (500 g)","ar":"برتقال طازج (٥٠٠ جم)","category":"Fruits","price":13.5,"pack":"500 g raw","sheet":4,"cell":1,"source":"https://www.carrefouregypt.com/mafegy/en/orange/a-orange-navel/p/32487"},
+    {"slug":"fresh-red-grapes","title":"Fresh Red Grapes (500 g)","ar":"عنب أحمر طازج (٥٠٠ جم)","category":"Fruits","price":50,"pack":"500 g raw","sheet":4,"cell":2,"source":"https://www.carrefouregypt.com/mafegy/en/grapes/red-grape-crimson/p/32547"},
+    {"slug":"fresh-figs","title":"Fresh Figs (500 g)","ar":"تين طازج (٥٠٠ جم)","category":"Fruits","price":39.5,"pack":"500 g raw","sheet":4,"cell":3,"source":"https://www.carrefouregypt.com/mafegy/en/exotic-fruit/fig-barshoumy/p/308079"},
+    {"slug":"fresh-pomegranates","title":"Fresh Pomegranates (1 kg)","ar":"رمان طازج (١ كجم)","category":"Fruits","price":69,"pack":"1 kg raw","sheet":5,"cell":0,"source":"https://ripe-eg.com/products/pomegranate-%D8%B1%D9%85%D8%A7%D9%86"},
+    {"slug":"fresh-guavas","title":"Fresh Guavas (500 g)","ar":"جوافة طازجة (٥٠٠ جم)","category":"Fruits","price":22,"pack":"500 g raw","sheet":5,"cell":1,"source":"https://www.carrefouregypt.com/mafegy/en/seed-fruit/a-guava/p/32558"},
+    {"slug":"fresh-lemons","title":"Fresh Lemons (500 g)","ar":"ليمون طازج (٥٠٠ جم)","category":"Fruits","price":16.5,"pack":"500 g raw","sheet":5,"cell":2,"source":"https://www.carrefouregypt.com/mafegy/en/lemon/a-lemon-balady/p/32483"},
+    {"slug":"fresh-kiwi","title":"Fresh Kiwi (500 g)","ar":"كيوي طازج (٥٠٠ جم)","category":"Fruits","price":83.5,"pack":"500 g raw","sheet":5,"cell":3,"source":"https://www.carrefouregypt.com/mafegy/en/kiwi/a-kiwi-by-kg/p/287170"}
+  ]
+}

@@ -6,6 +6,7 @@ import { TONE } from '@/components/HealthBadge'
 import AddToCartButton from '@/components/AddToCartButton'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import ConnectionNotice from '@/components/ConnectionNotice'
+import CatalogReferenceNotice from '@/components/CatalogReferenceNotice'
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   if (!isSupabaseConfigured()) return <ConnectionNotice />
@@ -108,6 +109,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
             <AddToCartButton productId={p.id} label={verdict === 'safe' ? 'Add to Cart' : 'Add to Cart Anyway'} className="w-full" />
+            <CatalogReferenceNotice title={p.title} />
           </div>
         </div>
       </div>

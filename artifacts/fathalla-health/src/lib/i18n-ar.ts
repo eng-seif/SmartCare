@@ -1,6 +1,9 @@
+import catalog from '../data/catalog-additions.json'
+
 // English -> Arabic dictionary. Keys are the exact English text shown in the UI (trimmed).
 // To translate a new string, just add a line here. Anything missing stays in English.
 export const AR: Record<string, string> = {
+    ...Object.fromEntries(catalog.products.map(p => [p.title, p.ar])),
     'Label-based screening, not a diagnosis or a guarantee of safety.': 'فحص مبني على بيانات الملصق، وليس تشخيصًا أو ضمانًا للسلامة.',
     'Nutrition is shown per catalog serving. Missing values are marked —, never assumed to be zero. Check the package and portion size.': 'القيم الغذائية لكل حصة مسجلة في الكتالوج. البيانات الناقصة تظهر — ولا تُعتبر صفرًا. راجع العبوة وحجم الحصة.',
     'GI: low up to 55, moderate 56–69, high from 70. GL: low up to 10, moderate above 10 and below 20, high from 20. The stricter diabetes screen uses both.': 'المؤشر السكري: منخفض حتى ٥٥، متوسط ٥٦–٦٩، مرتفع من ٧٠. الحمل السكري: منخفض حتى ١٠، متوسط فوق ١٠ وأقل من ٢٠، مرتفع من ٢٠. فحص السكري يستخدم الاثنين.',
@@ -104,6 +107,13 @@ export const AR: Record<string, string> = {
     'Celiac / Gluten Sensitivity': 'حساسية الجلوتين / السيلياك',
     // categories
     'Dairy': 'ألبان', 'Bakery': 'مخبوزات', 'Beverages': 'مشروبات', 'Grains': 'حبوب', 'Pantry': 'مؤن', 'Snacks': 'وجبات خفيفة', 'Protein': 'بروتين', 'Juices': 'عصائر',
+    'Fruits': 'فاكهة', 'Vegetables': 'خضار',
+    '500 g raw': '٥٠٠ جم طازج', '1 kg raw': '١ كجم طازج',
+    'Reference retail price; not a confirmed Fathalla price.': 'سعر استرشادي من متجر خارجي؛ ليس سعرًا مؤكدًا لفتح الله.',
+    'Illustrative AI-generated image.': 'صورة توضيحية مولّدة بالذكاء الاصطناعي.',
+    "The barcode is an internal catalog code, not a manufacturer's barcode.": 'الباركود كود داخلي للكتالوج، وليس باركود مصنع.',
+    'Price reference': 'مصدر السعر الاسترشادي',
+    'Price checked': 'تاريخ رصد السعر',
     // products
     'Plain Greek Yogurt': 'زبادي يوناني سادة', 'Low-Fat Milk': 'حليب قليل الدسم', 'Full-Fat Milk': 'حليب كامل الدسم', 'Unsweetened Almond Milk': 'حليب لوز بدون سكر',
     'White Cheese (Gebna Beda)': 'جبنة بيضاء', 'Flaxseed & Oat Bread': 'خبز بذور الكتان والشوفان', 'White Toast Bread': 'توست أبيض', 'Rolled Oats': 'شوفان',

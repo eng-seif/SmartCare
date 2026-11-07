@@ -8,6 +8,7 @@ import { evaluate, type Product } from '@/lib/health'
 import { translate } from '@/lib/i18n-ar'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import HealthChat from './HealthChat'
+import CatalogReferenceNotice from './CatalogReferenceNotice'
 
 type Props = {
   lang: 'ar' | 'en'; rows: Product[]; conditions: string[]
@@ -94,6 +95,7 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
                 {p.image_url ? <img src={p.image_url} alt={text(p.title)} className="fh-real-product" /> : <Package size={42} aria-hidden="true" />}
               </Link>
               <div className="fh-product-info">
+                <CatalogReferenceNotice title={p.title} ar={ar} compact />
                 <div className="fh-product-title"><div><h3><Link href={`/product/${p.id}`}>{text(p.title)}</Link></h3><div className="fh-product-detail">{p.serving_size || (ar ? 'راجع حجم الحصة على العبوة' : 'Check the serving size on the pack')} · {text(p.category ?? '')}</div></div>
                   <button type="button" className={`fh-status ${flag}`} aria-expanded={expandedProduct === p.id} aria-controls={`screening-${p.id}`} aria-label={ar ? `تفاصيل ملاحظات ${text(p.title)}` : `Screening details for ${p.title}`} onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}>{!result.dataComplete ? (ar ? 'بيانات ناقصة' : 'Data missing') : result.verdict === 'safe' ? (ar ? 'لا ملاحظات' : 'No flags') : result.verdict === 'avoid' ? (ar ? 'راجع الاختيار' : 'Review choice') : (ar ? 'انتبه للحصة' : 'Check serving')}</button>
                 </div>

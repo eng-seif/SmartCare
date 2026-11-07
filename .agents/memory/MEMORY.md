@@ -7,3 +7,4 @@
 - [Registration tutorial](onboarding-video.md) — new usage video before registration on web and Flutter; viewing must remain skippable.
 - [Tutorial recording](tutorial-recording.md) — record via the shared preview proxy; validate the real MP4 before embedding it.
 - [Voice input](voice-input.md) — speech becomes a reviewed draft; share the usage budget and verify upstream authorization.
+- [Supabase catalog access](supabase-catalog-access.md) — public reads do not prove write access; anonymous bucket listings can falsely suggest missing storage.
