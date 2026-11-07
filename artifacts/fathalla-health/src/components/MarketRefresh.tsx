@@ -23,6 +23,7 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
   const [screening, setScreening] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
+  const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
   const text = (en: string) => ar ? translate(en) : en
   const categories = [...new Set(rows.map(p => p.category)
     .filter((c): c is string => Boolean(c))
@@ -94,9 +95,17 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
               </Link>
               <div className="fh-product-info">
                 <div className="fh-product-title"><div><h3><Link href={`/product/${p.id}`}>{text(p.title)}</Link></h3><div className="fh-product-detail">{p.serving_size || (ar ? 'راجع حجم الحصة على العبوة' : 'Check the serving size on the pack')} · {text(p.category ?? '')}</div></div>
-                  <span className={`fh-status ${flag}`}>{!result.dataComplete ? (ar ? 'بيانات ناقصة' : 'Data missing') : result.verdict === 'safe' ? (ar ? 'لا ملاحظات' : 'No flags') : result.verdict === 'avoid' ? (ar ? 'راجع الاختيار' : 'Review choice') : (ar ? 'انتبه للحصة' : 'Check serving')}</span>
+                  <button type="button" className={`fh-status ${flag}`} aria-expanded={expandedProduct === p.id} aria-controls={`screening-${p.id}`} aria-label={ar ? `تفاصيل ملاحظات ${text(p.title)}` : `Screening details for ${p.title}`} onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}>{!result.dataComplete ? (ar ? 'بيانات ناقصة' : 'Data missing') : result.verdict === 'safe' ? (ar ? 'لا ملاحظات' : 'No flags') : result.verdict === 'avoid' ? (ar ? 'راجع الاختيار' : 'Review choice') : (ar ? 'انتبه للحصة' : 'Check serving')}</button>
                 </div>
-                <div className="fh-why"><Info size={13}/><span>{text(result.reasons[0])}</span></div>
+                <button type="button" className="fh-why" style={{ width: '100%', textAlign: 'start', cursor: 'pointer', background: 'transparent', border: 0 }} aria-expanded={expandedProduct === p.id} aria-controls={`screening-${p.id}`} onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}>
+                  <Info size={16} style={{ flexShrink: 0 }} aria-hidden="true" />
+                  <span>{text(result.reasons[0] ?? '')} <span className="underline">{expandedProduct === p.id ? (ar ? 'إخفاء التفاصيل' : 'Hide details') : (ar ? 'عرض التفاصيل' : 'Show details')}</span></span>
+                </button>
+                <div id={`screening-${p.id}`} hidden={expandedProduct !== p.id} role="region" aria-label={ar ? `أسباب ملاحظات ${text(p.title)}` : `Reasons for ${p.title}`} style={{ padding: '12px', marginBottom: '12px', border: '1px solid var(--fh-line, #d9d3c5)', borderRadius: '12px', overflowWrap: 'anywhere', fontSize: '13px', lineHeight: 1.8 }}>
+                  <strong>{ar ? 'سبب الملاحظة' : 'What prompted this note'}</strong>
+                  <ul style={{ paddingInlineStart: '20px', listStyle: 'disc', marginBlock: '8px' }}>{result.reasons.map((reason, index) => <li key={index}>{text(reason)}</li>)}</ul>
+                  <p>{ar ? 'القيمة الناقصة مش صفر، ومش معناها إن المنتج آمن أو غير مناسب بشكل مؤكد. راجع ملصق العبوة وحجم الحصة. الفحص إرشادي ومش تشخيص طبي.' : 'Missing values are unknown, not zero. They do not establish that a product is safe or unsuitable. Check the pack and serving size. Screening is guidance, not a medical diagnosis.'}</p>
+                </div>
                 <div className="fh-product-foot"><div className="fh-price">{Number(p.price).toLocaleString(ar ? 'ar-EG' : 'en-EG')} <small>{ar ? 'ج.م' : 'EGP'}</small></div>
                   <button className="fh-add" disabled={busy !== null} onClick={() => add(p)}><ShoppingCart size={13}/>{busy === p.id ? '…' : ar ? 'للسلة' : 'Add'}</button></div>
               </div>

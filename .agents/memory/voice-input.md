@@ -8,11 +8,17 @@ Speech input creates an editable draft; the customer must send it explicitly. Do
 
 **How to apply:** Preserve this behavior on web and Flutter, including cancellation, the thirty-second cap, microphone cleanup and a usable typing fallback.
 
-Transcription uses one request from the existing persistent assistant allowance before contacting the paid provider.
+Transcription uses one request from the existing persistent assistant allowance before the paid transcription attempt.
 
 **Why:** An additional paid endpoint must not bypass the established usage budget. Audio and transcript contents must not become usage-counter data.
 
 **How to apply:** Keep reservations fail-closed and explain the shared allowance beside the microphone. A provider failure is not evidence that no charge occurred.
+
+Known connection failures detected by a free authorization check must not consume the customer's allowance.
+
+**Why:** An invalid key prevents transcription; charging that known preflight failure would needlessly exhaust a limited allowance.
+
+**How to apply:** Reject a known-invalid connection before reserving paid usage or uploading microphone content, without refunding an attempt that might already have been billed.
 
 Verify actual upstream authorization rather than treating an integration's ready indicator as a successful speech test.
 

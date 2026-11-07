@@ -42,6 +42,21 @@ export async function POST(request: Request) {
       if (error && (token || error.name !== 'AuthSessionMissingError')) return json({ error: 'Account verification failed' }, 401)
       userId = data.user?.id
     } else if (token) return json({ error: 'Account verification unavailable' }, 503)
+    const proxyFetch = new ReplitConnectors().createProxyFetch('elevenlabs')
+    // A free authorization check prevents a known-invalid connection from
+    // consuming the customer's allowance or uploading microphone content.
+    const health = await proxyFetch('/v1/models', { signal: AbortSignal.any([request.signal, AbortSignal.timeout(10000)]) })
+    await health.body?.cancel()
+    if (health.status === 401) return json({
+      error: text('خدمة تحويل الصوت محتاجة تجديد الربط من إدارة الموقع. التسجيل مش هو المشكلة؛ تقدر تكتب سؤالك لحد ما الربط يتصلّح.', 'The speech service connection needs to be renewed by the site owner. Recording is not the problem; you can type your question meanwhile.'),
+      code: 'VOICE_PROVIDER_AUTH',
+    }, 503)
+    // A key may have speech access without model-list permission (403).
+    // Other service failures must not spend a customer's daily allowance.
+    if (!health.ok && health.status !== 403) return json({
+      error: text('خدمة تحويل الصوت مش متاحة حاليًا. المحاولة دي لم تُخصم من حصتك.', 'The speech service is unavailable. This attempt did not use your allowance.'),
+      code: 'VOICE_PROVIDER_UNAVAILABLE',
+    }, 503)
     const config = quotaConfig()
     const [{ pool }, { reserveChatUsage }] = await Promise.all([import('@workspace/db'), import('@workspace/db/chat-quota')])
     // Shares the persistent assistant allowance; no audio or transcripts are stored.
@@ -58,7 +73,6 @@ export async function POST(request: Request) {
     form.set('tag_audio_events', 'false')
     form.set('diarize', 'false')
     form.set('file', new Blob([new Uint8Array(audio)], { type: 'audio/wav' }), 'question.wav')
-    const proxyFetch = new ReplitConnectors().createProxyFetch('elevenlabs')
     const response = await proxyFetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', body: form, signal: AbortSignal.any([request.signal, AbortSignal.timeout(35000)]) })
     if (!response.ok) throw new Error('transcription-provider-unavailable')
     const body = await response.json() as { text?: unknown }
