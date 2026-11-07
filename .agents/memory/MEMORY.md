@@ -4,3 +4,6 @@
 - [Flutter and design approval](mobile-redesign-approval.md) — preview web/mobile before applying changes; user requires Flutter and a downloadable APK, not an Expo substitute.
 - [Flutter Android toolchain](flutter-android-toolchain.md) — Flutter installs through Nix here; Android SDK needs a separate official command-line setup, not a Replit language module.
 - [Dependency remediation](dependency-remediation.md) — catalog upgrades can leave vulnerable transitive versions; verify the entire resolved graph.
+- [Registration tutorial](onboarding-video.md) — new usage video before registration on web and Flutter; viewing must remain skippable.
+- [Tutorial recording](tutorial-recording.md) — record via the shared preview proxy; validate the real MP4 before embedding it.
+- [Voice input](voice-input.md) — speech becomes a reviewed draft; share the usage budget and verify upstream authorization.

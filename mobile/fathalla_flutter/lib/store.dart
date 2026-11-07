@@ -16,7 +16,12 @@ class ApiFailure implements Exception {
 }
 
 class Store extends ChangeNotifier {
-  bool ar = true, dark = false, loading = false, writing = false, ready = false;
+  bool ar = true,
+      dark = false,
+      loading = false,
+      writing = false,
+      ready = false,
+      tutorialSeen = false;
   String? error;
   List<DataRow> products = [], cart = [];
   DataRow profile = {};
@@ -33,6 +38,7 @@ class Store extends ChangeNotifier {
     _prefs ??= await SharedPreferences.getInstance();
     ar = _prefs!.getBool('arabic') ?? true;
     dark = _prefs!.getBool('dark') ?? false;
+    tutorialSeen = _prefs!.getBool('tutorial-v1') ?? false;
     loading = true;
     error = null;
     notifyListeners();
@@ -85,6 +91,43 @@ class Store extends ChangeNotifier {
     ar = !ar;
     await _prefs?.setBool('arabic', ar);
     notifyListeners();
+  }
+
+  Future<void> finishTutorial() async {
+    tutorialSeen = true;
+    try {
+      await _prefs?.setBool('tutorial-v1', true);
+    } catch (_) {
+      // A storage failure must never block skipping the tutorial.
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<String> transcribe(Uint8List wav) async {
+    final token = client?.auth.currentSession?.accessToken;
+    final response = await http
+        .post(
+          Uri.parse('$apiBase/assistant/transcribe'),
+          headers: {
+            'Content-Type': 'audio/wav',
+            'X-Voice-Language': ar ? 'ar' : 'en',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: wav,
+        )
+        .timeout(const Duration(seconds: 42));
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200 || body['text'] is! String) {
+      throw ApiFailure(
+        body['error'] as String? ??
+            t(
+              'تحويل الصوت غير متاح؛ اكتب سؤالك.',
+              'Voice is unavailable; please type your question.',
+            ),
+      );
+    }
+    return body['text'] as String;
   }
 
   Future<void> setDark() async {
@@ -167,7 +210,11 @@ class Store extends ChangeNotifier {
           .maybeSingle();
       final qty = ((item?['qty'] as num?)?.toInt() ?? 0) + delta;
       if (item != null && qty <= 0) {
-        await client!.from('cart_items').delete().eq('user_id', id).eq('product_id', p['id']);
+        await client!
+            .from('cart_items')
+            .delete()
+            .eq('user_id', id)
+            .eq('product_id', p['id']);
       } else if (qty > 0) {
         await client!.from('cart_items').upsert({
           'user_id': id,

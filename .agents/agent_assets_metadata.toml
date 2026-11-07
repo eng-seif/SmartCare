@@ -42,3 +42,39 @@ mtime_ms = 1793208718525
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/f8372a95-649d-44ce-8bb9-072aaa3299d8/a9885fc7-7842-4612-ae9f-8c8f6f05d8a5"
 storage_version_token = "1793208773425534"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YsfIbJjpPO8d7QbCulgGa"
+uri = "file://artifacts/fathalla-tutorial/public/audio/bg_music.mp3"
+type = "audio"
+title = "bg music"
+description = "Generated music: Warm lo-fi acoustic instrumental for a friendly app tutorial. Soft piano, plucked guitar, light brushed drums, 90 BPM, gentle and optimistic, clear soft hits every 5.5 seconds, resol…"
+logical_id = "b85e8273-c8f6-49ec-b184-073e887e3b7d"
+
+[[outputs]]
+id = "BZwSwuZ4Np0XRUtOBS-BJ"
+uri = "file://generated-artifacts/tutorial-recording/fathalla-tutorial.mp4"
+type = "video"
+title = "فيديو شرح استخدام فتح الله"
+description = "شرح عربي مدته ٣١ ثانية للبحث، قراءة الملصقات، ومساعد التغذية. يظهر قبل التسجيل ويمكن تخطيه."
+logical_id = "06834b71-39d5-4f8c-8e36-1ea3eef0886e"
+content_hash = "sha256:9d66a058b3eecc182fc55d709d057921924beaf9e4934d4e85cdf341f2c1594a"
+size = 1114019
+mtime_ms = 1794045466545
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/06834b71-39d5-4f8c-8e36-1ea3eef0886e/e144696a-eb34-4f20-9d88-9c6341889915"
+storage_version_token = "1794046319534181"
+content_type = "video/mp4"
+
+[[outputs]]
+id = "PrJspvc_WY51On6vuw3Ys"
+uri = "file://artifacts/fathalla-tutorial/public/images/smart-care-logo.svg"
+type = "image"
+title = "لوجو Smart Care الجديد"
+description = "اللوجو الجديد المستخدم في ملفات فيديو الشرح المعدّلة."
+logical_id = "0d616236-0c19-4859-9005-18fc586bdd64"
+content_hash = "sha256:cbe574fafda5bafe645623d01bee9361b7d4983e5c3443793152b1fb38bd4231"
+size = 421
+mtime_ms = 1794046474580
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:a537f261-0bd4-48d8-bec4-d3eed0993958/0d616236-0c19-4859-9005-18fc586bdd64/e7fa1251-e97f-439d-9692-fe6bafef971b"
+storage_version_token = "1794046666434233"
+content_type = "image/svg+xml"

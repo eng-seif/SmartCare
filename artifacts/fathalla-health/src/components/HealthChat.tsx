@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import VoiceInput from './VoiceInput'
 
 type Lang = 'en' | 'ar'
 type Msg = { role: 'user' | 'assistant'; content: string }
@@ -9,7 +10,7 @@ const T = {
     title: 'Nutrition Assistant', sub: 'General guidance, not medical advice',
     intro: 'Hi, I can help you read food labels and compare groceries. I give general nutrition guidance only. I cannot diagnose or tell you a food is guaranteed safe. Ask your doctor about your own care.',
     warn: 'Your messages are sent to an AI service. Do not include your name, email or other personal details.',
-    suggestions: ['What does glycemic index mean?', 'How do I spot hidden sugar on a label?', 'Which Fathalla items are lower in sodium?'],
+    suggestions: ['How can I build a balanced meal?', 'What are protein and fibre for?', 'How do I compare sugar and sodium on labels?', 'What does glycemic index mean?'],
     placeholder: 'Ask about a food or a label', send: 'Send', clear: 'Clear chat', retry: 'Retry',
     useProfile: 'Use my health profile for this chat', noProfile: 'Sign in and set a profile to enable',
     profileNote: 'Changing this setting starts a new chat.',
@@ -22,7 +23,7 @@ const T = {
     title: 'مساعد التغذية', sub: 'إرشادات عامة وليست نصيحة طبية',
     intro: 'أهلاً، أساعدك في قراءة ملصقات الأغذية ومقارنة المنتجات. أقدم إرشادات غذائية عامة فقط، ولا أشخّص الحالات ولا أضمن أن أي منتج آمن. اسأل طبيبك عن حالتك.',
     warn: 'يتم إرسال رسائلك إلى خدمة ذكاء اصطناعي. لا تكتب اسمك أو بريدك أو أي بيانات شخصية.',
-    suggestions: ['ما معنى مؤشر نسبة السكر في الدم؟', 'كيف أكتشف السكر المخفي في الملصق؟', 'ما المنتجات الأقل صوديوم في فتح الله؟'],
+    suggestions: ['إزاي أجهّز وجبة متوازنة؟', 'إيه فايدة البروتين والألياف؟', 'أقارن السكر والصوديوم في الملصق إزاي؟', 'ما معنى مؤشر نسبة السكر في الدم؟'],
     placeholder: 'اسأل عن منتج أو ملصق', send: 'إرسال', clear: 'مسح المحادثة', retry: 'إعادة المحاولة',
     useProfile: 'استخدم ملفي الصحي في هذه المحادثة', noProfile: 'سجّل الدخول وأضف ملفاً صحياً للتفعيل',
     profileNote: 'تغيير الاختيار يبدأ محادثة جديدة.',
@@ -38,6 +39,7 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [voiceBusy, setVoiceBusy] = useState(false)
   const [failed, setFailed] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [useProfile, setUseProfile] = useState(false)
@@ -60,7 +62,7 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
   }, [messages, loading, failed])
 
   async function run(history: Msg[]) {
-    if (busyRef.current || (quotaNotice && Date.parse(quotaNotice.resetAt) > Date.now())) return
+    if (busyRef.current || voiceBusy || (quotaNotice && Date.parse(quotaNotice.resetAt) > Date.now())) return
     busyRef.current = true
     setLoading(true); setFailed(false); setErrorMessage('')
     const ctrl = new AbortController()
@@ -186,14 +188,16 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
         </p>
       )}
 
-      <form onSubmit={e => { e.preventDefault(); send(input) }} className="flex items-end gap-space-sm">
+      <VoiceInput lang={lang} disabled={loading || Boolean(quotaNotice)} draft={input} onBusy={setVoiceBusy}
+        onText={text => setInput(old => [old.trim(), text].filter(Boolean).join(' '))} />
+      <form onSubmit={e => { e.preventDefault(); if (!voiceBusy) send(input) }} className="flex items-end gap-space-sm">
         <div className="flex-1 min-w-0">
           <label htmlFor="health-chat-input" className="sr-only">{t.label}</label>
           <input id="health-chat-input" value={input} maxLength={1500} onChange={e => setInput(e.target.value)}
             placeholder={t.placeholder} autoComplete="off"
             className="w-full h-11 px-space-md rounded-lg bg-surface-container-lowest border border-surface-variant text-on-surface font-body-md text-body-md placeholder:text-on-surface-variant" />
         </div>
-        <button type="submit" disabled={loading || Boolean(quotaNotice) || !input.trim()}
+        <button type="submit" disabled={loading || voiceBusy || Boolean(quotaNotice) || !input.trim()}
           className="h-11 px-space-md bg-primary-container text-on-secondary rounded-lg font-title-md text-title-md disabled:opacity-50 flex items-center gap-1">
           <span className="material-symbols-outlined text-xl rtl:-scale-x-100" aria-hidden="true">send</span>
           <span>{t.send}</span>

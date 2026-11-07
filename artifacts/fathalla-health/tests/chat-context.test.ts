@@ -113,7 +113,10 @@ test('actual catalog titles and label values survive; unknown nutrition is never
   assert.match(policy, /Egyptian Arabic/)
   assert.match(policy, /Only recommend named products/)
   assert.match(policy, /NEVER zero/)
-  assert.match(policy, /text only/)
+  assert.match(policy, /only the final text, not audio/)
+  assert.match(policy, /NUTRITION_EDUCATION/)
+  assert.match(policy, /whole grains/)
+  assert.match(policy, /not a live web search/)
 })
 
 test('missing config, catalog errors and transport failure preserve general chat without invented inventory', async () => {

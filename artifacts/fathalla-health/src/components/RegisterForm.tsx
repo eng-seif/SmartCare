@@ -6,10 +6,10 @@ import { CONDITIONS } from '@/lib/health'
 const field = 'w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface placeholder:text-secondary font-body-md text-body-md focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all'
 const card = 'bg-surface-container-lowest rounded-xl p-6 sm:p-8 shadow-sm border border-surface-variant/40 flex flex-col gap-6'
 
-export default function RegisterForm() {
+export default function RegisterForm({ initialMode = 'signup' }: { initialMode?: 'signup' | 'login' }) {
   const [f, setF] = useState({ full_name: '', email: '', password: '', age: '', gender: 'male' })
   const [conds, setConds] = useState<string[]>([])
-  const [mode, setMode] = useState<'signup' | 'login'>('signup')
+  const [mode, setMode] = useState<'signup' | 'login'>(initialMode)
   const [err, setErr] = useState('')
   const [ok, setOk] = useState(false)
   const [busy, setBusy] = useState(false)

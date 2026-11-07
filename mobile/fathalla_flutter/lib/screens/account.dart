@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../store.dart';
 import '../widgets.dart';
 import 'profile.dart';
+import 'tutorial.dart';
 
 class AccountPage extends StatefulWidget {
   final Store store;
@@ -14,6 +15,7 @@ class _AccountPageState extends State<AccountPage> {
   final form = GlobalKey<FormState>();
   final email = TextEditingController(), password = TextEditingController();
   bool register = false, busy = false, hidden = true;
+  bool tutorialDismissed = false, replayTutorial = false;
   Store get s => widget.store;
   @override
   void dispose() {
@@ -144,6 +146,27 @@ class _AccountPageState extends State<AccountPage> {
         ],
       );
     }
+    if (replayTutorial || (!s.tutorialSeen && !tutorialDismissed)) {
+      return TutorialPage(
+        store: s,
+        onContinue: () {
+          s.finishTutorial();
+          setState(() {
+            tutorialDismissed = true;
+            replayTutorial = false;
+            register = true;
+          });
+        },
+        onLogin: () {
+          s.finishTutorial();
+          setState(() {
+            tutorialDismissed = true;
+            replayTutorial = false;
+            register = false;
+          });
+        },
+      );
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(22),
       child: Form(
@@ -151,6 +174,16 @@ class _AccountPageState extends State<AccountPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TextButton.icon(
+              onPressed: () => setState(() => replayTutorial = true),
+              icon: const Icon(Icons.play_circle_outline),
+              label: Text(
+                s.t(
+                  'شاهد شرح الاستخدام مرة أخرى',
+                  'Watch the usage guide again',
+                ),
+              ),
+            ),
             Text(
               register
                   ? s.t('حساب جديد', 'Create an account')

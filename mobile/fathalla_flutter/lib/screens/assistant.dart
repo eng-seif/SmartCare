@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide DataRow;
 import '../health.dart';
 import '../store.dart';
+import '../voice_input.dart';
 
 class AssistantPage extends StatelessWidget {
   final Store store;
@@ -22,7 +23,7 @@ class AssistantCard extends StatefulWidget {
 class _AssistantCardState extends State<AssistantCard> {
   final input = TextEditingController();
   final List<DataRow> messages = [];
-  bool busy = false, useProfile = false;
+  bool busy = false, useProfile = false, voiceBusy = false;
   String? error;
   Store get s => widget.store;
   @override
@@ -33,7 +34,7 @@ class _AssistantCardState extends State<AssistantCard> {
 
   Future<void> send([String? suggestion]) async {
     final text = (suggestion ?? input.text).trim();
-    if (busy || text.isEmpty || text.length > 1500) return;
+    if (busy || voiceBusy || text.isEmpty || text.length > 1500) return;
     final next = <DataRow>[
       ...messages,
       {'role': 'user', 'content': text},
@@ -126,8 +127,8 @@ class _AssistantCardState extends State<AssistantCard> {
             ),
             child: Text(
               s.t(
-                'أقدر أساعدك تفهم الملصق وتقارن بين المنتجات. الاختيار لك دائمًا، والبيانات المتاحة قد تكون غير مكتملة.',
-                'I can help you understand labels and compare products. The choice is yours, and available data may be incomplete.',
+                'اسألني عن الوجبات المتوازنة والبروتين والألياف، أو فهم الملصق ومقارنة المنتجات. دي معلومات عامة مش تشخيص، والبيانات قد تكون غير مكتملة.',
+                'Ask about balanced meals, protein and fibre, or reading labels and comparing products. This is general education, not diagnosis; data may be incomplete.',
               ),
               style: const TextStyle(fontSize: 12, height: 1.7),
             ),
@@ -178,11 +179,19 @@ class _AssistantCardState extends State<AssistantCard> {
                 runSpacing: 5,
                 children: [
                   for (final question in [
-                    s.t('ما معنى مؤشر السكر؟', 'What is glycemic index?'),
-                    s.t('كيف أقرأ كمية الحصة؟', 'How do I read serving size?'),
+                    s.t(
+                      'أجهّز وجبة متوازنة إزاي؟',
+                      'How can I build a balanced meal?',
+                    ),
+                    s.t(
+                      'إيه فايدة البروتين والألياف؟',
+                      'What are protein and fibre for?',
+                    ),
                   ])
                     OutlinedButton(
-                      onPressed: busy || !s.ready ? null : () => send(question),
+                      onPressed: busy || voiceBusy || !s.ready
+                          ? null
+                          : () => send(question),
                       child: Text(
                         question,
                         style: const TextStyle(fontSize: 10),
@@ -231,6 +240,24 @@ class _AssistantCardState extends State<AssistantCard> {
               ),
             ),
           const SizedBox(height: 10),
+          VoiceInput(
+            store: s,
+            disabled: busy || !s.ready,
+            draft: () => input.text,
+            onBusy: (value) {
+              if (mounted) setState(() => voiceBusy = value);
+            },
+            onText: (text) {
+              input.text = [
+                input.text.trim(),
+                text,
+              ].where((v) => v.isNotEmpty).join(' ');
+              input.selection = TextSelection.collapsed(
+                offset: input.text.length,
+              );
+            },
+          ),
+          const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -251,7 +278,7 @@ class _AssistantCardState extends State<AssistantCard> {
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                onPressed: busy || !s.ready ? null : send,
+                onPressed: busy || voiceBusy || !s.ready ? null : send,
                 tooltip: s.t('إرسال', 'Send'),
                 icon: busy
                     ? const SizedBox(

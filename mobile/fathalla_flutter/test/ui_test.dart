@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fathalla_health/main.dart';
 import 'package:fathalla_health/store.dart';
 import 'package:fathalla_health/widgets.dart';
+import 'package:fathalla_health/voice_input.dart';
+import 'dart:typed_data';
 
 class PreviewStore extends Store {
   @override
@@ -24,6 +26,17 @@ class PreviewStore extends Store {
 }
 
 void main() {
+  test(
+    'Microphone PCM is packaged as mono 16 kHz WAV without writing files',
+    () {
+      final wav = voiceWav(Uint8List(32000));
+      final header = ByteData.sublistView(wav);
+      expect(String.fromCharCodes(wav.sublist(0, 4)), 'RIFF');
+      expect(header.getUint32(24, Endian.little), 16000);
+      expect(header.getUint32(40, Endian.little), 32000);
+      expect(wav.length, 32044);
+    },
+  );
   test('Product image URLs resolve against the published website safely', () {
     expect(
       productImageUri('/products/eggs.webp', base: 'https://shop.example'),
@@ -103,10 +116,19 @@ void main() {
       );
       await tester.tap(find.text('Account'));
       await tester.pumpAndSettle();
+      expect(find.text('Get to know the app in half a minute'), findsOneWidget);
+      await tester.tap(find.text('Already registered? Sign in'));
+      await tester.pumpAndSettle();
       expect(find.text('Welcome back'), findsOneWidget);
       await tester.tap(find.text('Sign in'));
       await tester.pumpAndSettle();
       expect(find.text('Enter a valid email.'), findsOneWidget);
+      await tester.tap(find.text('Watch the usage guide again'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Skip and create an account'));
+      await tester.pumpAndSettle();
+      expect(store.tutorialSeen, isTrue);
+      expect(find.text('Create an account'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

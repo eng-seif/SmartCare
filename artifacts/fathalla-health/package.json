@@ -8,11 +8,13 @@
     "start": "next start --hostname 0.0.0.0",
     "serve": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/health.test.ts && tsx --test tests/chat-quota.test.ts tests/chat-route.test.ts tests/chat-context.test.ts",
+    "test": "tsx tests/health.test.ts && tsx --test tests/chat-quota.test.ts tests/chat-route.test.ts tests/chat-context.test.ts tests/voice-policy.test.ts",
     "test:quota-db": "tsx --test ../../lib/db/tests/chat-quota.test.ts",
     "lint": "eslint"
   },
   "dependencies": {
+    "@google-cloud/storage": "^8.4.0",
+    "@replit/connectors-sdk": "^0.4.3",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.117.2",
     "@workspace/db": "workspace:*",

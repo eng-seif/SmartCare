@@ -1,0 +1,29 @@
+kind = "video"
+videoAspectRatio = "16:9"
+previewPath = "/fathalla-tutorial/"
+title = "شرح استخدام Smart Care"
+description = "فيديو تعريفي قصير عن استخدام تطبيق التسوق والمساعد الغذائي، لعرضه اختياريًا قبل إنشاء الحساب على الويب وFlutter."
+version = "1.0.0"
+id = "artifacts/fathalla-tutorial"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/fathalla-tutorial/" ]
+localPort = 21937
+
+[services.development]
+run = "pnpm --filter @workspace/fathalla-tutorial run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/fathalla-tutorial", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/fathalla-tutorial/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21937"
+BASE_PATH = "/fathalla-tutorial/"
