@@ -40,9 +40,9 @@ from the existing account after sign-in and is not copied to local files.
 
 - The microphone requests Android audio permission and captures at most 30
   seconds of mono 16 kHz PCM in memory. It does not create an audio file.
-- ElevenLabs transcribes through the website's server-side connector.
-  Provider credentials never belong in the APK. A valid ElevenLabs connection
-  is required; typing remains available when permissions or transcription fail.
+- Gemini transcribes through Replit AI Integrations on the website's server.
+  Provider credentials never belong in the APK. The server's Gemini integration
+  must be enabled; typing remains available when permissions or transcription fail.
 - The recognized text is added to the editable draft, not automatically sent
   to the chatbot. One transcription uses one request from the existing
   assistant allowance; sending the resulting question uses another.

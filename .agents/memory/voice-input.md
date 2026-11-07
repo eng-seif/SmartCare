@@ -2,6 +2,12 @@
 name: Voice input and nutrition privacy
 description: Speech-to-draft behavior, allowance decisions and upstream verification
 ---
+Use Gemini through Replit AI Integrations for speech-to-text, while preserving the existing chatbot response model.
+
+**Why:** The user explicitly selected Gemini after the ElevenLabs connection repeatedly rejected authorization.
+
+**How to apply:** Keep provider disclosure accurate on web and Flutter. Do not silently switch back to ElevenLabs. Transcription is transient and must not create conversation or audio storage.
+
 Speech input creates an editable draft; the customer must send it explicitly. Do not silently auto-send recognized speech or add spoken chatbot replies.
 
 **Why:** A recognition mistake can change a nutrition question. Reviewing the text keeps the customer in control; spoken replies were not requested.

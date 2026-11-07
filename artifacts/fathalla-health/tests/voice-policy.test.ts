@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { wavSeconds } from '../src/lib/voice-policy'
+import { wavSeconds, voiceChunks, joinVoiceText, voiceBudget } from '../src/lib/voice-policy'
 function wav(seconds = 1) {
   const bytes = Buffer.alloc(44 + seconds * 32000)
   bytes.write('RIFF'); bytes.writeUInt32LE(bytes.length - 8, 4); bytes.write('WAVE', 8)
@@ -23,4 +23,19 @@ test('Only bounded PCM mono 16 kHz voice can reach the paid transcription provid
   const corrupt = wav(); corrupt.writeUInt32LE(0xffffffff, 40)
   assert.equal(wavSeconds(corrupt), null)
   assert.equal(wavSeconds(wav().subarray(0, 100)), null)
+})
+test('Long recordings are bounded inline chunks with valid WAV headers and overlap', () => {
+  const chunks = voiceChunks(wav(30))
+  assert.equal(chunks.length, 2)
+  assert.equal(wavSeconds(chunks[0]), 15)
+  assert.equal(wavSeconds(chunks[1]), 15.5)
+  assert.ok(chunks.every(c => c.length < 8 * 1024 * 1024))
+  assert.equal(voiceChunks(wav(1)).length, 1)
+  assert.throws(() => voiceChunks(Buffer.from('not WAV')))
+  assert.equal(voiceBudget(2), 40960)
+})
+test('Chunk merging removes overlapping words while preserving Arabic and English', () => {
+  assert.equal(joinVoiceText(['إيه فايدة البروتين والألياف', 'البروتين والألياف في الأكل؟']), 'إيه فايدة البروتين والألياف في الأكل؟')
+  assert.equal(joinVoiceText(['What is dietary fibre?', 'dietary fibre and protein?']), 'What is dietary fibre? and protein?')
+  assert.equal(joinVoiceText(['', '']), '')
 })

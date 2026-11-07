@@ -1,9 +1,8 @@
-import { ReplitConnectors } from '@replit/connectors-sdk'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseServer } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { quotaConfig, quotaSubject, limitMessage } from '@/lib/chat-quota'
-import { MAX_VOICE_BYTES, wavSeconds } from '@/lib/voice-policy'
+import { MAX_VOICE_BYTES, wavSeconds, voiceChunks, voiceBudget } from '@/lib/voice-policy'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -42,21 +41,13 @@ export async function POST(request: Request) {
       if (error && (token || error.name !== 'AuthSessionMissingError')) return json({ error: 'Account verification failed' }, 401)
       userId = data.user?.id
     } else if (token) return json({ error: 'Account verification unavailable' }, 503)
-    const proxyFetch = new ReplitConnectors().createProxyFetch('elevenlabs')
-    // A free authorization check prevents a known-invalid connection from
-    // consuming the customer's allowance or uploading microphone content.
-    const health = await proxyFetch('/v1/models', { signal: AbortSignal.any([request.signal, AbortSignal.timeout(10000)]) })
-    await health.body?.cancel()
-    if (health.status === 401) return json({
-      error: text('خدمة تحويل الصوت محتاجة تجديد الربط من إدارة الموقع. التسجيل مش هو المشكلة؛ تقدر تكتب سؤالك لحد ما الربط يتصلّح.', 'The speech service connection needs to be renewed by the site owner. Recording is not the problem; you can type your question meanwhile.'),
-      code: 'VOICE_PROVIDER_AUTH',
+    if (!process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || !process.env.AI_INTEGRATIONS_GEMINI_API_KEY) return json({
+      error: text('خدمة تحويل الصوت لم تكتمل تهيئتها بعد. تقدر تكتب سؤالك.', 'Speech transcription has not been configured yet. You can type your question.'),
+      code: 'VOICE_NOT_CONFIGURED',
     }, 503)
-    // A key may have speech access without model-list permission (403).
-    // Other service failures must not spend a customer's daily allowance.
-    if (!health.ok && health.status !== 403) return json({
-      error: text('خدمة تحويل الصوت مش متاحة حاليًا. المحاولة دي لم تُخصم من حصتك.', 'The speech service is unavailable. This attempt did not use your allowance.'),
-      code: 'VOICE_PROVIDER_UNAVAILABLE',
-    }, 503)
+    const { transcribeChunks, voiceQueueFull } = await import('@/lib/voice-transcription')
+    if (voiceQueueFull()) return json({ error: text('تحويل الصوت مشغول. حاول بعد لحظات.', 'Transcription is busy. Try again shortly.') }, 429)
+    const segments = voiceChunks(audio)
     const config = quotaConfig()
     const [{ pool }, { reserveChatUsage }] = await Promise.all([import('@workspace/db'), import('@workspace/db/chat-quota')])
     // Shares the persistent assistant allowance; no audio or transcripts are stored.
@@ -64,19 +55,10 @@ export async function POST(request: Request) {
     const quota = await reserveChatUsage(pool, {
       subject: quotaSubject(config, request.headers, userId),
       personalLimit: userId ? config.user : config.guest,
-      projectLimit: config.project, projectTokenLimit: config.tokens, tokens: 1000,
+      projectLimit: config.project, projectTokenLimit: config.tokens, tokens: voiceBudget(segments.length),
     })
     if (!quota.allowed) return json({ error: limitMessage(ar ? 'ar' : 'en', quota.scope), resetAt: quota.resetAt }, 429)
-    const form = new FormData()
-    form.set('model_id', 'scribe_v1')
-    form.set('language_code', ar ? 'ara' : 'eng')
-    form.set('tag_audio_events', 'false')
-    form.set('diarize', 'false')
-    form.set('file', new Blob([new Uint8Array(audio)], { type: 'audio/wav' }), 'question.wav')
-    const response = await proxyFetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', body: form, signal: AbortSignal.any([request.signal, AbortSignal.timeout(35000)]) })
-    if (!response.ok) throw new Error('transcription-provider-unavailable')
-    const body = await response.json() as { text?: unknown }
-    const transcript = typeof body.text === 'string' ? body.text.trim() : ''
+    const transcript = await transcribeChunks(segments, ar ? 'ar' : 'en', AbortSignal.any([request.signal, AbortSignal.timeout(35000)]))
     if (!transcript) return json({ error: text('لم نلتقط كلامًا واضحًا؛ حاول مجددًا أو اكتب سؤالك.', 'No clear speech detected. Try again or type your question.') }, 422)
     if (transcript.length > 1500) return json({ error: text('التسجيل طويل. جرّب سؤالًا أقصر.', 'Please record a shorter question.') }, 400)
     return json({ text: transcript })

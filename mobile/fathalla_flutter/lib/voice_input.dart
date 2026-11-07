@@ -206,8 +206,8 @@ class _VoiceInputState extends State<VoiceInput> {
       ),
       Text(
         s.t(
-          '٣٠ ثانية بحد أقصى. يُرسل الصوت إلى ElevenLabs للتحويل ولا يُحفظ في التطبيق. راجع النص قبل إرساله. التحويل يستخدم طلبًا من حصة المساعد.',
-          'Up to 30 seconds. Audio goes to ElevenLabs and is not stored by this app. Review the transcript before sending. Transcription uses one assistant allowance request.',
+          '٣٠ ثانية بحد أقصى. يُرسل الصوت إلى Gemini عبر Replit للتحويل ولا يُحفظ في التطبيق. راجع النص قبل إرساله. التحويل يستخدم طلبًا من حصة المساعد.',
+          'Up to 30 seconds. Audio goes to Gemini via Replit and is not stored by this app. Review the transcript before sending. Transcription uses one assistant allowance request.',
         ),
         style: const TextStyle(fontSize: 10, height: 1.6),
       ),
