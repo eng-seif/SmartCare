@@ -136,9 +136,6 @@ export async function POST(request: Request) {
       },
       ...input.messages,
     ];
-    // Only run DB-backed quota when a database is provisioned.
-    // When DATABASE_URL is absent, the in-memory rate limiter above provides
-    // basic protection and the chat still works.
     if (dbAvailable) {
       const config = quotaConfig();
       const [{ pool }, { reserveChatUsage }] = await Promise.all([
@@ -173,8 +170,6 @@ export async function POST(request: Request) {
           },
         );
     }
-    // Reservations are intentionally not refunded on provider failure, timeout,
-    // disconnect or retry: the provider may already have charged for the attempt.
     const { openai } = await import("@workspace/integrations-openai-ai-server");
     const response = await openai.chat.completions.create(
       {
@@ -190,7 +185,10 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ChatContextError)
       return json({ error: error.message }, error.status);
-    // Do not log health information, conversation bodies, or provider credentials.
+    console.error(
+      "[chat/route] error:",
+      error instanceof Error ? error.message : String(error),
+    );
     return json(
       {
         error: ar
