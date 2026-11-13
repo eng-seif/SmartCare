@@ -27,3 +27,6 @@ packages = ["flutter", "jdk17", "unzip"]
 
 [userenv.shared]
 NEXT_PUBLIC_SUPABASE_URL = "https://luukvzyqieutnpfwlzqr.supabase.co"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-37540426-60c2-41d9-b8e7-3b3e2798c9d6"
