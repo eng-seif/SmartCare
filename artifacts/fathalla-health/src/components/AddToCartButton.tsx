@@ -10,12 +10,16 @@ export default function AddToCartButton({ productId, label = 'Add to Cart', icon
   async function add() {
     setState('busy')
     const sb = supabaseBrowser()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) return router.push('/register')
-    const { data: row } = await sb.from('cart_items').select('qty').eq('product_id', productId).maybeSingle()
-    const { error } = await sb.from('cart_items').upsert({ user_id: user.id, product_id: productId, qty: (row?.qty ?? 0) + 1 }, { onConflict: 'user_id,product_id' })
+    const { data: { session } } = await sb.auth.getSession()
+    if (!session?.user) { setState('idle'); return router.push('/register') }
+    const { data: row } = await sb.from('cart_items').select('qty').eq('user_id', session.user.id).eq('product_id', productId).maybeSingle()
+    const { error } = await sb.from('cart_items').upsert(
+      { user_id: session.user.id, product_id: productId, qty: (row?.qty ?? 0) + 1 },
+      { onConflict: 'user_id,product_id' },
+    )
     if (error) { console.error(error); setState('idle'); alert(`Could not add to cart: ${error.message}`); return }
-    setState('done'); router.refresh()
+    window.dispatchEvent(new CustomEvent('fh-cart-count', { detail: { delta: 1 } }))
+    setState('done')
     setTimeout(() => setState('idle'), 1500)
   }
   return (

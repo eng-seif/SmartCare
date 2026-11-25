@@ -12,6 +12,18 @@ import LangToggle from './LangToggle'
 
     export default function Header({ cartCount = 0, user = null, lang = 'en' }: { cartCount?: number; user?: HeaderUser; lang?: 'en' | 'ar' }) {
       const currentPath = usePathname();
+      const [badgeCount, setBadgeCount] = useState(cartCount);
+
+      useEffect(() => { setBadgeCount(cartCount); }, [cartCount]);
+      useEffect(() => {
+        const onCartCount = (e: Event) => {
+          const detail = (e as CustomEvent<{ count?: number; delta?: number }>).detail;
+          if (typeof detail?.count === 'number') setBadgeCount(Math.max(0, detail.count));
+          else if (typeof detail?.delta === 'number') setBadgeCount(c => Math.max(0, c + detail.delta!));
+        };
+        window.addEventListener('fh-cart-count', onCartCount);
+        return () => window.removeEventListener('fh-cart-count', onCartCount);
+      }, []);
 
       const navItems = [
         { label: lang === 'ar' ? 'السوق' : 'Market', path: "/" },
@@ -66,7 +78,7 @@ import LangToggle from './LangToggle'
               <Link href="/cart" aria-label="Cart" className="relative p-space-sm rounded-lg text-on-surface hover:bg-surface-container-low transition-colors">
                 <span className="material-symbols-outlined text-2xl">shopping_basket</span>
                 <span className="absolute top-1 end-1 w-4 h-4 rounded-full bg-primary-container text-white font-label-sm text-[10px] flex items-center justify-center font-bold">
-                  {cartCount}
+                  {badgeCount}
                 </span>
               </Link>
 

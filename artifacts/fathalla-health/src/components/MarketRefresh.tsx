@@ -13,19 +13,24 @@ import CatalogReferenceNotice from './CatalogReferenceNotice'
 
 type Props = {
   lang: 'ar' | 'en'; rows: Product[]; conditions: string[]
+  initialCartMap?: Record<string, number>
   monitor: { loggedIn: boolean; [key: string]: unknown }; initialQuery?: string
 }
 
 /** Approved visual treatment, backed by the original catalog, auth and screening rules. */
-export default function MarketRefresh({ lang, rows, conditions, monitor, initialQuery = '' }: Props) {
+export default function MarketRefresh({ lang, rows, conditions, initialCartMap = {}, monitor, initialQuery = '' }: Props) {
   const ar = lang === 'ar'
   const router = useRouter()
   const [query, setQuery] = useState(initialQuery)
   const [category, setCategory] = useState('')
-  const [busy, setBusy] = useState<string | null>(null)
+  const [cartMap, setCartMap] = useState<Record<string, number>>(initialCartMap)
   const [notice, setNotice] = useState('')
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
   const text = (en: string) => ar ? translate(en) : en
+
+  useEffect(() => {
+    setCartMap(initialCartMap)
+  }, [initialCartMap])
 
   useEffect(() => {
     if (!notice) return
@@ -44,24 +49,26 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
 
   async function add(p: Product) {
     if (!monitor.loggedIn) { router.push('/register'); return }
-    setBusy(p.id); setNotice('')
+    const nextQty = (cartMap[p.id] ?? 0) + 1
+    // Instant optimistic feedback: update badge and show snackbar immediately
+    setCartMap(prev => ({ ...prev, [p.id]: nextQty }))
+    setNotice(ar ? 'تمت الإضافة إلى السلة' : 'Added to your basket')
+    window.dispatchEvent(new CustomEvent('fh-cart-count', { detail: { delta: 1 } }))
+
     try {
       const sb = supabaseBrowser()
-      const { data: { user } } = await sb.auth.getUser()
-      if (!user) { router.push('/register'); return }
-      const { data, error: readError } = await sb.from('cart_items').select('qty')
-        .eq('user_id', user.id).eq('product_id', p.id).maybeSingle()
-      if (readError) throw readError
+      const { data: { session } } = await sb.auth.getSession()
+      if (!session?.user) { router.push('/register'); return }
       const { error } = await sb.from('cart_items').upsert(
-        { user_id: user.id, product_id: p.id, qty: (data?.qty ?? 0) + 1 },
+        { user_id: session.user.id, product_id: p.id, qty: nextQty },
         { onConflict: 'user_id,product_id' },
       )
       if (error) throw error
-      setNotice(ar ? 'تمت الإضافة إلى السلة' : 'Added to your basket')
-      router.refresh()
     } catch {
+      setCartMap(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] ?? 1) - 1) }))
+      window.dispatchEvent(new CustomEvent('fh-cart-count', { detail: { delta: -1 } }))
       setNotice(ar ? 'تعذّر تحديث السلة. حاول مرة أخرى.' : 'Could not update your basket. Please try again.')
-    } finally { setBusy(null) }
+    }
   }
 
   return <div className="fh-web fh-production-home" dir={ar ? 'rtl' : 'ltr'} data-no-translate>
@@ -131,7 +138,7 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
                   </Link>
                 </div>
                 <div className="fh-product-foot"><div className="fh-price">{Number(p.price).toLocaleString(ar ? 'ar-EG' : 'en-EG')} <small>{ar ? 'ج.م' : 'EGP'}</small></div>
-                  <button className="fh-add" disabled={busy !== null} onClick={() => add(p)}><ShoppingCart size={13}/>{busy === p.id ? '…' : ar ? 'للسلة' : 'Add'}</button></div>
+                  <button className="fh-add" type="button" onClick={() => add(p)}><ShoppingCart size={13}/>{ar ? 'للسلة' : 'Add'}</button></div>
               </div>
             </article>
           })}

@@ -14,13 +14,22 @@ export default function Scanner() {
   const [found, setFound] = useState<Product | null>(null)
   const [conds, setConds] = useState<string[]>([])
 
-  async function lookup(barcode: string) {
+  useEffect(() => {
     const sb = supabaseBrowser()
-    const { data: { user } } = await sb.auth.getUser()
-    if (user) { const { data: pr } = await sb.from('profiles').select('conditions').eq('id', user.id).single(); setConds(pr?.conditions ?? []) }
-    const { data } = await sb.from('products').select('*').eq('barcode', barcode).maybeSingle()
-    if (data) { setFound(enrichProduct(data as Product)); setMsg(`Barcode ${barcode} matched.`) }
-    else { setFound(null); setMsg(`No product found for barcode ${barcode}.`) }
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) return
+      sb.from('profiles').select('conditions').eq('id', session.user.id).maybeSingle()
+        .then(({ data }) => { if (data?.conditions) setConds(data.conditions) })
+    }).catch(() => {})
+  }, [])
+
+  async function lookup(barcode: string) {
+    const clean = barcode.trim()
+    if (!clean) return
+    const sb = supabaseBrowser()
+    const { data } = await sb.from('products').select('*').eq('barcode', clean).maybeSingle()
+    if (data) { setFound(enrichProduct(data as Product)); setMsg(`Barcode ${clean} matched.`) }
+    else { setFound(null); setMsg(`No product found for barcode ${clean}.`) }
   }
 
   useEffect(() => {
