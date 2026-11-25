@@ -1,6 +1,7 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import MarketClient from '@/components/MarketRefresh'
 import { type Product } from '@/lib/health'
+import { enrichProduct } from '@/lib/product-nutrition'
 import { assessCart } from '@/lib/cart-status'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import ConnectionNotice from '@/components/ConnectionNotice'
@@ -29,7 +30,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   const lim = { sugar: Number(profile?.max_sugar_g ?? 15), carbs: Number(profile?.max_carbs_g ?? 50), sodium: Number(profile?.max_sodium_mg ?? 1500) }
   const { data: rows } = await sb.from('products').select('*').order('title')
   const { data: cart } = user ? await sb.from('cart_items').select('qty, product:products(*)') : { data: [] }
-  const items: { qty: number; product: Product }[] = (cart ?? []).map((r: any) => ({ qty: r.qty, product: r.product })).filter((i: any) => i.product)
+  const items: { qty: number; product: Product }[] = (cart ?? []).map((r: any) => ({ qty: r.qty, product: r.product ? enrichProduct(r.product as Product) : r.product })).filter((i: any) => i.product)
   const a = assessCart(items, conditions, lim)
   const monitor = {
     loggedIn: !!user, level: a.level, unsafe: a.risky.length, items: items.reduce((s, i) => s + i.qty, 0),

@@ -100,7 +100,7 @@ export default function VoiceInput({ lang, disabled, draft, onText, onBusy }: {
       </button>
       {state === 'recording' && <button type="button" onClick={() => stop(true)} className="p-2 underline flex gap-1 items-center"><X size={14} />{t('إلغاء', 'Cancel')}</button>}
     </div>
-    <p className="text-xs text-on-surface-variant">{t('٣٠ ثانية بحد أقصى. يُرسل التسجيل لتحويله لنص، ولا نحفظه في التطبيق. راجع النص قبل الإرسال.', 'Up to 30 seconds. Audio is sent for speech-to-text transcription and is not stored by this app. Review the text before sending.')}</p>
+    <p className="text-[11px] leading-snug text-on-surface-variant">{t('حتى ٣٠ ثانية — يُحوّل لنص تراجعه قبل الإرسال.', 'Up to 30s — transcribed to editable text before sending.')}</p>
     {error && <p role="alert" className="text-xs text-error">{error}</p>}
   </div>
 }

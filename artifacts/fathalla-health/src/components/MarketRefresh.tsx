@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Barcode, HeartPulse, Info, Package, ShoppingCart, Sparkles } from 'lucide-react'
-import { evaluate, type Product } from '@/lib/health'
+import { ArrowRight, Barcode, CheckCircle2, HeartPulse, Info, Package, ShoppingCart, Sparkles } from 'lucide-react'
+import { evaluate, nutrition, type Product } from '@/lib/health'
+import { enrichProduct } from '@/lib/product-nutrition'
 import { translate } from '@/lib/i18n-ar'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import HealthChat from './HealthChat'
@@ -21,19 +22,25 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
   const router = useRouter()
   const [query, setQuery] = useState(initialQuery)
   const [category, setCategory] = useState('')
-  const [screening, setScreening] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
   const text = (en: string) => ar ? translate(en) : en
-  const categories = [...new Set(rows.map(p => p.category)
+
+  useEffect(() => {
+    if (!notice) return
+    const timer = setTimeout(() => setNotice(''), 3000)
+    return () => clearTimeout(timer)
+  }, [notice])
+
+  const enrichedRows = useMemo(() => rows.map(enrichProduct), [rows])
+  const categories = [...new Set(enrichedRows.map(p => p.category)
     .filter((c): c is string => Boolean(c))
     .filter(c => !/^(pantry|مؤن)$/i.test(c.trim())))]
-  const filtered = useMemo(() => rows.filter(p =>
+  const filtered = useMemo(() => enrichedRows.filter(p =>
     (!category || p.category === category) &&
-    `${p.title} ${text(p.title)} ${p.category} ${text(p.category ?? '')}`.toLowerCase().includes(query.trim().toLowerCase()) &&
-    (!screening || evaluate(p, conditions).verdict === 'safe')
-  ), [rows, category, query, screening, conditions, ar])
+    `${p.title} ${text(p.title)} ${p.category} ${text(p.category ?? '')}`.toLowerCase().includes(query.trim().toLowerCase())
+  ), [enrichedRows, category, query, ar])
 
   async function add(p: Product) {
     if (!monitor.loggedIn) { router.push('/register'); return }
@@ -50,7 +57,7 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
         { onConflict: 'user_id,product_id' },
       )
       if (error) throw error
-      setNotice(ar ? 'تمت الإضافة إلى السلة.' : 'Added to your basket.')
+      setNotice(ar ? 'تمت الإضافة إلى السلة' : 'Added to your basket')
       router.refresh()
     } catch {
       setNotice(ar ? 'تعذّر تحديث السلة. حاول مرة أخرى.' : 'Could not update your basket. Please try again.')
@@ -75,10 +82,6 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
           <label className="fh-local-search"><span className="sr-only">{ar ? 'ابحث عن منتج' : 'Search products'}</span>
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder={ar ? 'ابحث عن منتج أو عنصر غذائي' : 'Search foods or ingredients'} type="search" />
           </label>
-          <button className="fh-switch-label" onClick={() => setScreening(!screening)} role="switch" aria-checked={screening}>
-            <span>{ar ? 'اعرض الخيارات الأقل تأثيرًا' : 'Show lower-flag choices'}</span><span className={`fh-switch ${screening ? 'on' : ''}`}><i/></span>
-          </button>
-          <div className="fh-filter-note"><Info size={13}/>{ar ? 'ملاحظاتنا إرشادية وتعتمد على البيانات المتاحة. لا تظهر القيمة المجهولة كأنها صفر.' : 'Screening is guidance based on available labels. Unknown data is never treated as zero.'}</div>
         </div>
         <div className="fh-sectionhead"><div><h2>{ar ? 'اختيارات من السوق' : 'Explore the market'}</h2><p>{ar ? 'افهم سبب الملاحظة قبل أن تقرر.' : 'See what prompted a note, then decide.'}</p></div>
           <span className="fh-count">{filtered.length} {ar ? 'منتج' : 'products'}</span></div>
@@ -90,6 +93,14 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
           {filtered.map(p => {
             const result = evaluate(p, conditions)
             const flag = result.verdict === 'safe' ? 'good' : result.verdict === 'avoid' ? 'avoid' : 'caution'
+            const fitSummary = result.verdict === 'safe'
+              ? (monitor.loggedIn
+                ? (ar ? 'مناسب لإرشادات ملفك الصحي الحالية' : 'Good fit for your health profile')
+                : (ar ? 'لا توجد ملاحظات عامة — سجّل دخولك لتخصيص التقييم لحالتك' : 'No general flags — sign in to personalize for your conditions'))
+              : result.verdict === 'avoid'
+                ? (ar ? 'غير مناسب لحالتك الصحية الحالية' : 'Not recommended for your current profile')
+                : (ar ? 'انتبه لحجم الحصة أو القيم الغذائية' : 'Use caution — check serving size and nutrition')
+            const isOpen = expandedProduct === p.id
             return <article className="fh-card fh-product" key={p.id}>
               <Link className="fh-product-visual" href={`/product/${p.id}`} aria-label={text(p.title)}>
                 {p.image_url ? <img src={p.image_url} alt={text(p.title)} className="fh-real-product" /> : <Package size={42} aria-hidden="true" />}
@@ -97,16 +108,27 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
               <div className="fh-product-info">
                 <CatalogReferenceNotice title={p.title} ar={ar} compact />
                 <div className="fh-product-title"><div><h3><Link href={`/product/${p.id}`}>{text(p.title)}</Link></h3><div className="fh-product-detail">{p.serving_size || (ar ? 'راجع حجم الحصة على العبوة' : 'Check the serving size on the pack')} · {text(p.category ?? '')}</div></div>
-                  <button type="button" className={`fh-status ${flag}`} aria-expanded={expandedProduct === p.id} aria-controls={`screening-${p.id}`} aria-label={ar ? `تفاصيل ملاحظات ${text(p.title)}` : `Screening details for ${p.title}`} onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}>{!result.dataComplete ? (ar ? 'بيانات ناقصة' : 'Data missing') : result.verdict === 'safe' ? (ar ? 'لا ملاحظات' : 'No flags') : result.verdict === 'avoid' ? (ar ? 'راجع الاختيار' : 'Review choice') : (ar ? 'انتبه للحصة' : 'Check serving')}</button>
+                  <button type="button" className={`fh-status ${flag}`} aria-expanded={isOpen} aria-controls={`screening-${p.id}`} aria-label={ar ? `تفاصيل ملاحظات ${text(p.title)}` : `Screening details for ${p.title}`} onClick={() => setExpandedProduct(isOpen ? null : p.id)}>{!result.dataComplete ? (ar ? 'بيانات ناقصة' : 'Data missing') : result.verdict === 'safe' ? (ar ? 'مناسب' : 'Suitable') : result.verdict === 'avoid' ? (ar ? 'غير مناسب' : 'Avoid') : (ar ? 'انتبه للحصة' : 'Check serving')}</button>
                 </div>
-                <button type="button" className="fh-why" style={{ width: '100%', textAlign: 'start', cursor: 'pointer', background: 'transparent', border: 0 }} aria-expanded={expandedProduct === p.id} aria-controls={`screening-${p.id}`} onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}>
+                <button type="button" className="fh-why" style={{ width: '100%', textAlign: 'start', cursor: 'pointer', background: 'transparent', border: 0 }} aria-expanded={isOpen} aria-controls={`screening-${p.id}`} onClick={() => setExpandedProduct(isOpen ? null : p.id)}>
                   <Info size={16} style={{ flexShrink: 0 }} aria-hidden="true" />
-                  <span>{text(result.reasons[0] ?? '')} <span className="underline">{expandedProduct === p.id ? (ar ? 'إخفاء التفاصيل' : 'Hide details') : (ar ? 'عرض التفاصيل' : 'Show details')}</span></span>
+                  <span>{fitSummary} · <span className="underline font-semibold">{isOpen ? (ar ? 'إخفاء التفاصيل' : 'Hide details') : (ar ? 'هل يناسبني؟' : 'Check if it fits me')}</span></span>
                 </button>
-                <div id={`screening-${p.id}`} hidden={expandedProduct !== p.id} role="region" aria-label={ar ? `أسباب ملاحظات ${text(p.title)}` : `Reasons for ${p.title}`} style={{ padding: '12px', marginBottom: '12px', border: '1px solid var(--fh-line, #d9d3c5)', borderRadius: '12px', overflowWrap: 'anywhere', fontSize: '13px', lineHeight: 1.8 }}>
-                  <strong>{ar ? 'سبب الملاحظة' : 'What prompted this note'}</strong>
-                  <ul style={{ paddingInlineStart: '20px', listStyle: 'disc', marginBlock: '8px' }}>{result.reasons.map((reason, index) => <li key={index}>{text(reason)}</li>)}</ul>
-                  <p>{ar ? 'القيمة الناقصة مش صفر، ومش معناها إن المنتج آمن أو غير مناسب بشكل مؤكد. راجع ملصق العبوة وحجم الحصة. الفحص إرشادي ومش تشخيص طبي.' : 'Missing values are unknown, not zero. They do not establish that a product is safe or unsuitable. Check the pack and serving size. Screening is guidance, not a medical diagnosis.'}</p>
+                <div id={`screening-${p.id}`} hidden={!isOpen} role="region" aria-label={ar ? `أسباب ملاحظات ${text(p.title)}` : `Reasons for ${p.title}`} className="fh-expand-panel">
+                  <div className={`fh-expand-verdict ${flag}`}>
+                    <strong>{fitSummary}</strong>
+                  </div>
+                  <div className="fh-mini-nutrients">
+                    <div><span>{ar ? 'السكر' : 'Sugar'}</span><strong>{nutrition(p.sugar_content, 'g')}</strong></div>
+                    <div><span>{ar ? 'صافي الكربوهيدرات' : 'Net Carbs'}</span><strong>{nutrition(p.net_carbs, 'g')}</strong></div>
+                    <div><span>{ar ? 'الصوديوم' : 'Sodium'}</span><strong>{nutrition(p.sodium_content, 'mg')}</strong></div>
+                    <div><span>{ar ? 'المؤشر السكري' : 'GI'}</span><strong>{nutrition(p.glycemic_index)}</strong></div>
+                  </div>
+                  <ul className="fh-expand-reasons">{result.reasons.map((reason, index) => <li key={index}>{text(reason)}</li>)}</ul>
+                  <Link href={`/product/${p.id}`} className="fh-expand-link">
+                    <span>{ar ? 'عرض التحليل الكامل والبدائل الصحية' : 'View full breakdown & healthy swaps'}</span>
+                    <ArrowRight size={14} className="rtl:rotate-180" />
+                  </Link>
                 </div>
                 <div className="fh-product-foot"><div className="fh-price">{Number(p.price).toLocaleString(ar ? 'ar-EG' : 'en-EG')} <small>{ar ? 'ج.م' : 'EGP'}</small></div>
                   <button className="fh-add" disabled={busy !== null} onClick={() => add(p)}><ShoppingCart size={13}/>{busy === p.id ? '…' : ar ? 'للسلة' : 'Add'}</button></div>
@@ -117,6 +139,12 @@ export default function MarketRefresh({ lang, rows, conditions, monitor, initial
         </div>
       </section>
     </div>
-    {notice && <div className="fh-toast" role="status"><span>{notice}</span><button onClick={() => setNotice('')} aria-label={ar ? 'إغلاق' : 'Dismiss'}>×</button></div>}
+    {notice && (
+      <div className="fh-toast" role="status" aria-live="polite">
+        <CheckCircle2 size={17} style={{ flexShrink: 0 }} aria-hidden="true" />
+        <span>{notice}</span>
+        <button type="button" onClick={() => setNotice('')} aria-label={ar ? 'إغلاق' : 'Dismiss'}>×</button>
+      </div>
+    )}
   </div>
 }

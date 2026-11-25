@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { evaluate, nutrition, type Product } from '@/lib/health'
+import { enrichProduct } from '@/lib/product-nutrition'
 import { TONE } from './HealthBadge'
 import AddToCartButton from './AddToCartButton'
 
@@ -18,7 +19,7 @@ export default function Scanner() {
     const { data: { user } } = await sb.auth.getUser()
     if (user) { const { data: pr } = await sb.from('profiles').select('conditions').eq('id', user.id).single(); setConds(pr?.conditions ?? []) }
     const { data } = await sb.from('products').select('*').eq('barcode', barcode).maybeSingle()
-    if (data) { setFound(data as Product); setMsg(`Barcode ${barcode} matched.`) }
+    if (data) { setFound(enrichProduct(data as Product)); setMsg(`Barcode ${barcode} matched.`) }
     else { setFound(null); setMsg(`No product found for barcode ${barcode}.`) }
   }
 

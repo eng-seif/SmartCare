@@ -137,10 +137,10 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
         </button>
       </div>
 
-      <p className="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low border border-surface-variant/40 rounded-lg px-space-sm py-space-xs">{t.warn}</p>
+      {!compact && <p className="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low border border-surface-variant/40 rounded-lg px-space-sm py-space-xs">{t.warn}</p>}
 
       <div role="log" aria-label={t.log} aria-live="polite"
-        className={`${compact ? 'h-56' : 'h-72'} overflow-y-auto flex flex-col gap-space-sm bg-surface-container-low rounded-xl border border-surface-variant/40 p-space-sm`}>
+        className={`${compact ? 'min-h-[120px]' : 'h-72'} overflow-y-auto flex flex-col gap-space-sm bg-surface-container-low rounded-xl border border-surface-variant/40 p-space-sm`}>
         <div className="max-w-[90%] self-start rounded-xl rounded-ss-sm bg-surface-container-lowest border border-surface-variant/40 px-space-md py-space-sm font-body-md text-body-md text-on-surface">{compact
           ? (lang === 'ar' ? 'أشرح ملصقات الأغذية وأساعدك تقارن المنتجات. إرشاد عام، مش تشخيص أو ضمان لملاءمة الطعام؛ ارجع لطبيبك.' : 'I can explain labels and compare foods. General guidance, not a diagnosis or safety guarantee; ask your doctor about your care.')
           : t.intro}</div>
@@ -188,21 +188,23 @@ export default function HealthChat({ lang = 'en', profileAvailable, compact = fa
         </p>
       )}
 
-      <VoiceInput lang={lang} disabled={loading || Boolean(quotaNotice)} draft={input} onBusy={setVoiceBusy}
-        onText={text => setInput(old => [old.trim(), text].filter(Boolean).join(' '))} />
-      <form onSubmit={e => { e.preventDefault(); if (!voiceBusy) send(input) }} className="flex items-end gap-space-sm">
-        <div className="flex-1 min-w-0">
-          <label htmlFor="health-chat-input" className="sr-only">{t.label}</label>
-          <input id="health-chat-input" value={input} maxLength={1500} onChange={e => setInput(e.target.value)}
-            placeholder={t.placeholder} autoComplete="off"
-            className="w-full h-11 px-space-md rounded-lg bg-surface-container-lowest border border-surface-variant text-on-surface font-body-md text-body-md placeholder:text-on-surface-variant" />
-        </div>
-        <button type="submit" disabled={loading || voiceBusy || Boolean(quotaNotice) || !input.trim()}
-          className="h-11 px-space-md bg-primary-container text-on-secondary rounded-lg font-title-md text-title-md disabled:opacity-50 flex items-center gap-1">
-          <span className="material-symbols-outlined text-xl rtl:-scale-x-100" aria-hidden="true">send</span>
-          <span>{t.send}</span>
-        </button>
-      </form>
+      <div className="shrink-0 flex flex-col gap-2">
+        <VoiceInput lang={lang} disabled={loading || Boolean(quotaNotice)} draft={input} onBusy={setVoiceBusy}
+          onText={text => setInput(old => [old.trim(), text].filter(Boolean).join(' '))} />
+        <form onSubmit={e => { e.preventDefault(); if (!voiceBusy) send(input) }} className="flex items-end gap-space-sm">
+          <div className="flex-1 min-w-0">
+            <label htmlFor="health-chat-input" className="sr-only">{t.label}</label>
+            <input id="health-chat-input" value={input} maxLength={1500} onChange={e => setInput(e.target.value)}
+              placeholder={t.placeholder} autoComplete="off"
+              className="w-full h-11 px-space-md rounded-lg bg-surface-container-lowest border border-surface-variant text-on-surface font-body-md text-body-md placeholder:text-on-surface-variant" />
+          </div>
+          <button type="submit" disabled={loading || voiceBusy || Boolean(quotaNotice) || !input.trim()}
+            className="h-11 px-space-md bg-primary-container text-on-primary rounded-lg font-title-md text-title-md disabled:opacity-50 flex items-center gap-1 shrink-0">
+            <span className="material-symbols-outlined text-xl rtl:-scale-x-100" aria-hidden="true">send</span>
+            <span>{t.send}</span>
+          </button>
+        </form>
+      </div>
     </section>
   )
 }

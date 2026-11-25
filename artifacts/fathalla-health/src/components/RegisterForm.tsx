@@ -16,35 +16,23 @@ const COND_AR: Record<string, string> = {
   celiac: 'حساسية الجلوتين / السيلياك',
 }
 
-function mapAuthError(message: string, ar: boolean): { text: string; unconfirmed: boolean } {
+function mapAuthError(message: string, ar: boolean): string {
   const lower = message.toLowerCase()
   if (lower.includes('email not confirmed')) {
-    return {
-      unconfirmed: true,
-      text: ar
-        ? 'الحساب لم يتم تفعيله بعد. افتح بريدك الإلكتروني واضغط رابط التفعيل، أو أعد إرسال الرابط.'
-        : 'Your email is not confirmed yet. Check your inbox for the confirmation link, or resend it below.',
-    }
+    return ar
+      ? 'هذا الحساب بانتظار التفعيل في إعدادات Supabase (تأكيد البريد الإلكتروني). عطّل خيار Confirm email من لوحة Supabase أو سجّل بحساب مفعّل.'
+      : 'Email confirmation is currently enforced in Supabase Auth settings. Disable "Confirm email" in Supabase Authentication -> Providers -> Email to allow instant login.'
   }
   if (lower.includes('invalid login credentials')) {
-    return {
-      unconfirmed: false,
-      text: ar ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' : 'Invalid email or password.',
-    }
+    return ar ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' : 'Invalid email or password.'
   }
-  if (lower.includes('user already registered')) {
-    return {
-      unconfirmed: false,
-      text: ar ? 'هذا البريد مسجّل بالفعل. جرّب تسجيل الدخول.' : 'This email is already registered. Try signing in instead.',
-    }
+  if (lower.includes('user already registered') || lower.includes('already been registered')) {
+    return ar ? 'هذا البريد مسجّل بالفعل. جرّب تسجيل الدخول.' : 'This email is already registered. Try signing in instead.'
   }
   if (lower.includes('rate limit') || lower.includes('too many requests')) {
-    return {
-      unconfirmed: false,
-      text: ar ? 'محاولات كثيرة في وقت قصير. انتظر دقيقة وحاول مجددًا.' : 'Too many attempts. Please wait a minute and try again.',
-    }
+    return ar ? 'محاولات كثيرة في وقت قصير. انتظر دقيقة وحاول مجددًا.' : 'Too many attempts. Please wait a minute and try again.'
   }
-  return { unconfirmed: false, text: message }
+  return message
 }
 
 export default function RegisterForm({ initialMode = 'signup', lang = 'en' }: { initialMode?: 'signup' | 'login'; lang?: 'ar' | 'en' }) {
@@ -53,7 +41,6 @@ export default function RegisterForm({ initialMode = 'signup', lang = 'en' }: { 
   const [conds, setConds] = useState<string[]>([])
   const [mode, setMode] = useState<'signup' | 'login'>(initialMode)
   const [err, setErr] = useState('')
-  const [unconfirmed, setUnconfirmed] = useState(false)
   const [ok, setOk] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
@@ -63,68 +50,81 @@ export default function RegisterForm({ initialMode = 'signup', lang = 'en' }: { 
     setMode(next)
     setErr('')
     setNotice('')
-    setUnconfirmed(false)
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setErr('')
     setNotice('')
-    setUnconfirmed(false)
     const email = f.email.trim()
     if (!email) return
     setBusy(true)
     try {
       const sb = supabaseBrowser()
-      const emailRedirectTo = `${window.location.origin}/auth/callback?next=/cart`
-      const res = mode === 'signup'
-        ? await sb.auth.signUp({
-            email,
-            password: f.password,
-            options: {
-              emailRedirectTo,
-              data: { full_name: f.full_name.trim(), age: Number(f.age) || null, gender: f.gender, conditions: conds },
-            },
-          })
-        : await sb.auth.signInWithPassword({ email, password: f.password })
-      if (res.error) {
-        const mapped = mapAuthError(res.error.message, ar)
-        setUnconfirmed(mapped.unconfirmed)
-        setErr(mapped.text)
+      if (mode === 'signup') {
+        const meta = {
+          full_name: f.full_name.trim(),
+          age: Number(f.age) || null,
+          gender: f.gender,
+          conditions: conds,
+        }
+        const apiRes = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: f.password, ...meta }),
+        }).catch(() => null)
+        const apiJson = apiRes ? await apiRes.json().catch(() => ({})) : { fallback: true }
+
+        if (apiRes && !apiRes.ok && apiJson?.error) {
+          setErr(mapAuthError(String(apiJson.error), ar))
+          return
+        }
+
+        if (apiJson?.created) {
+          const loginRes = await sb.auth.signInWithPassword({ email, password: f.password })
+          if (loginRes.error) {
+            setErr(mapAuthError(loginRes.error.message, ar))
+            return
+          }
+          setOk(true)
+          window.location.assign('/cart')
+          return
+        }
+
+        const res = await sb.auth.signUp({
+          email,
+          password: f.password,
+          options: { data: meta },
+        })
+        if (res.error) {
+          setErr(mapAuthError(res.error.message, ar))
+          return
+        }
+        if (!res.data.session) {
+          // Try immediate sign-in in case Supabase created the user without returning a session
+          const retryLogin = await sb.auth.signInWithPassword({ email, password: f.password })
+          if (retryLogin.data.session) {
+            setOk(true)
+            window.location.assign('/cart')
+            return
+          }
+          setErr(mapAuthError(retryLogin.error?.message || 'email not confirmed', ar))
+          return
+        }
+        setOk(true)
+        window.location.assign('/cart')
         return
       }
-      if (!res.data.session) {
-        setNotice(ar
-          ? 'تم إنشاء الحساب! افحص بريدك الإلكتروني واضغط رابط التفعيل ثم سجّل الدخول.'
-          : 'Account created! Check your email and click the confirmation link, then sign in.')
+
+      const res = await sb.auth.signInWithPassword({ email, password: f.password })
+      if (res.error) {
+        setErr(mapAuthError(res.error.message, ar))
         return
       }
       setOk(true)
       window.location.assign('/cart')
     } catch (error) {
       setErr(error instanceof Error ? error.message : (ar ? 'تعذّر الاتصال بخدمة الحسابات.' : 'Could not connect to authentication service.'))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function resendConfirmation() {
-    const email = f.email.trim()
-    if (!email) return
-    setBusy(true)
-    setErr('')
-    setNotice('')
-    try {
-      const sb = supabaseBrowser()
-      const { error } = await sb.auth.resend({
-        type: 'signup',
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/cart` },
-      })
-      if (error) setErr(mapAuthError(error.message, ar).text)
-      else setNotice(ar ? 'تم إعادة إرسال رابط التفعيل لبريدك الإلكتروني.' : 'Confirmation email resent. Please check your inbox.')
-    } catch {
-      setErr(ar ? 'تعذّر إعادة الإرسال.' : 'Could not resend confirmation email.')
     } finally {
       setBusy(false)
     }
@@ -144,7 +144,7 @@ export default function RegisterForm({ initialMode = 'signup', lang = 'en' }: { 
       const { error } = await sb.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/callback?next=/profile`,
       })
-      if (error) setErr(mapAuthError(error.message, ar).text)
+      if (error) setErr(mapAuthError(error.message, ar))
       else setNotice(ar ? 'تم إرسال رابط استعادة كلمة المرور لبريدك الإلكتروني.' : 'Password reset link sent to your email.')
     } catch {
       setErr(ar ? 'تعذّر إرسال رابط استعادة كلمة المرور.' : 'Could not send password reset email.')
@@ -240,13 +240,8 @@ export default function RegisterForm({ initialMode = 'signup', lang = 'en' }: { 
           )}
 
           {err && (
-            <div role="alert" className="rounded-xl bg-error-container text-on-error-container px-4 py-3 flex flex-col gap-2">
+            <div role="alert" className="rounded-xl bg-error-container text-on-error-container px-4 py-3">
               <p className="font-body-md font-medium">{err}</p>
-              {unconfirmed && (
-                <button type="button" onClick={resendConfirmation} disabled={busy} className="self-start underline font-bold text-sm">
-                  {ar ? 'إعادة إرسال رابط التفعيل' : 'Resend confirmation email'}
-                </button>
-              )}
             </div>
           )}
           {notice && <p role="status" className="rounded-xl bg-tertiary-fixed/40 text-on-tertiary-fixed px-4 py-3 font-body-md font-semibold">{notice}</p>}
@@ -258,7 +253,7 @@ export default function RegisterForm({ initialMode = 'signup', lang = 'en' }: { 
                   : busy
                     ? (ar ? 'جارٍ التنفيذ...' : 'Please wait...')
                     : mode === 'signup'
-                      ? (ar ? 'إنشاء الحساب وتفعيل السلة الذكية' : 'Complete Registration & Activate Safe Cart')
+                      ? (ar ? 'إنشاء الحساب والدخول فورًا' : 'Create Account & Start Shopping')
                       : (ar ? 'تسجيل الدخول' : 'Sign in')}
               </span>
               <span className="material-symbols-outlined text-[20px] rtl:-scale-x-100">arrow_forward</span>

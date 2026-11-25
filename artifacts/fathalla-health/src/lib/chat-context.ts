@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChatInput } from './chat-policy'
 import { evaluate, type Product } from './health'
+import { enrichProduct } from './product-nutrition'
 
 export class ChatContextError extends Error {
   constructor(public status: number, message: string) { super(message) }
@@ -36,7 +37,7 @@ export async function loadChatContext(sb: SupabaseClient | null, input: ChatInpu
     // Catalog failure must not disable text-only general guidance.
     try {
       const { data, error } = await sb.from('products').select('*').order('title').limit(80)
-      if (!error) { products = (data ?? []) as Product[]; catalogAvailable = true }
+      if (!error) { products = ((data ?? []) as Product[]).map(enrichProduct); catalogAvailable = true }
     } catch { /* No inventory is supplied on a transport failure. */ }
   } else if (input.useProfile) {
     throw new ChatContextError(409, ar ? 'ملفك الصحي غير متصل. ألغِ الاختيار لاستخدام المساعد العام.' : 'Your profile is not connected. Turn the option off for general guidance.')

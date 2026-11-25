@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { supabaseServer } from '@/lib/supabase/server'
 import { evaluate, CONDITIONS, type Product } from '@/lib/health'
+import { enrichProduct } from '@/lib/product-nutrition'
 import { assessCart, normalizeLimits, intakePercent } from '@/lib/cart-status'
 import HealthBadge from '@/components/HealthBadge'
 import CartItemControls from '@/components/CartItemControls'
@@ -31,7 +32,9 @@ export default async function CartPage() {
   if (!user) redirect('/register')
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle()
   const { data } = await sb.from('cart_items').select('qty, product:products(*)')
-  const items: { qty: number; product: Product }[] = (data ?? []).map((r: any) => ({ qty: r.qty as number, product: r.product as Product }))
+  const items: { qty: number; product: Product }[] = (data ?? [])
+    .filter((r: any) => r.product)
+    .map((r: any) => ({ qty: r.qty as number, product: enrichProduct(r.product as Product) }))
   const c: string[] = profile?.conditions ?? []
   const lim = normalizeLimits({ sugar: Number(profile?.max_sugar_g ?? 15), carbs: Number(profile?.max_carbs_g ?? 50), sodium: Number(profile?.max_sodium_mg ?? 1500) })
   const a = assessCart(items, c, lim)
