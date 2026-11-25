@@ -4,15 +4,7 @@ import { parseChatInput, chatInstructions } from "@/lib/chat-policy";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ChatContextError, loadChatContext } from "@/lib/chat-context";
-import {
-  quotaConfig,
-  quotaSubject,
-  reservedTokens,
-  limitMessage,
-  MAX_COMPLETION_TOKENS,
-} from "@/lib/chat-quota";
-
-const dbAvailable = Boolean(process.env.DATABASE_URL);
+import { MAX_COMPLETION_TOKENS } from "@/lib/chat-quota";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -102,10 +94,18 @@ export async function POST(request: Request) {
     );
   bucket.count++;
   buckets.set(key, bucket);
-  if (
-    !process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ||
-    !process.env.AI_INTEGRATIONS_OPENAI_API_KEY
-  )
+  const apiKey =
+    process.env.GROQ_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const baseUrl = (
+    process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ||
+    "https://api.groq.com/openai/v1"
+  ).replace(/\/+$/, "");
+  const model =
+    process.env.AI_INTEGRATIONS_OPENAI_MODEL ||
+    process.env.GROQ_MODEL ||
+    (baseUrl.includes("groq.com") ? "llama-3.3-70b-versatile" : "gpt-5.4-mini");
+
+  if (!apiKey)
     return json(
       {
         error: ar
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
             },
           )
         : await supabaseServer();
-    const { userId, context } = await loadChatContext(sb, input, accessToken);
+    const { context } = await loadChatContext(sb, input, accessToken);
     const messages = [
       {
         role: "system" as const,
@@ -136,50 +136,27 @@ export async function POST(request: Request) {
       },
       ...input.messages,
     ];
-    if (dbAvailable) {
-      const config = quotaConfig();
-      const [{ pool }, { reserveChatUsage }] = await Promise.all([
-        import("@workspace/db"),
-        import("@workspace/db/chat-quota"),
-      ]);
-      const quota = await reserveChatUsage(pool, {
-        subject: quotaSubject(config, request.headers, userId),
-        personalLimit: userId ? config.user : config.guest,
-        projectLimit: config.project,
-        projectTokenLimit: config.tokens,
-        tokens: reservedTokens(messages),
-      });
-      if (!quota.allowed)
-        return json(
-          {
-            error: limitMessage(input.lang, quota.scope),
-            code:
-              quota.scope === "project"
-                ? "CHAT_PROJECT_LIMIT"
-                : "CHAT_DAILY_LIMIT",
-            resetAt: quota.resetAt,
-          },
-          429,
-          {
-            "Retry-After": String(
-              Math.max(
-                1,
-                Math.ceil((Date.parse(quota.resetAt) - Date.now()) / 1000),
-              ),
-            ),
-          },
-        );
-    }
-    const { openai } = await import("@workspace/integrations-openai-ai-server");
-    const response = await openai.chat.completions.create(
-      {
-        model: "gpt-5.4-mini",
+    const providerResponse = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
         max_completion_tokens: MAX_COMPLETION_TOKENS,
         messages,
-      },
-      { timeout: 35_000, maxRetries: 0, signal: request.signal },
-    );
-    const reply = response.choices[0]?.message?.content?.trim();
+      }),
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(35_000)]),
+    });
+    if (!providerResponse.ok) {
+      const errText = await providerResponse.text().catch(() => "");
+      throw new Error(`provider-${providerResponse.status}: ${errText.slice(0, 200)}`);
+    }
+    const response = (await providerResponse.json()) as {
+      choices?: Array<{ message?: { content?: string | null } }>;
+    };
+    const reply = response.choices?.[0]?.message?.content?.trim();
     if (!reply) throw new Error("empty-response");
     return json({ reply, catalogAvailable: context.catalogAvailable });
   } catch (error) {

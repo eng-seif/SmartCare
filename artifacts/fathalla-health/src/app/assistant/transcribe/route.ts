@@ -1,12 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { quotaConfig, quotaSubject, limitMessage } from "@/lib/chat-quota";
 import {
   MAX_VOICE_BYTES,
   wavSeconds,
   voiceChunks,
-  voiceBudget,
 } from "@/lib/voice-policy";
 
 export const runtime = "nodejs";
@@ -106,32 +104,6 @@ export async function POST(request: Request) {
         429,
       );
     const segments = voiceChunks(audio);
-    // Only run DB-backed quota when a database is provisioned.
-    // When DATABASE_URL is absent, voice transcription still works without quota tracking.
-    if (process.env.DATABASE_URL) {
-      const config = quotaConfig();
-      const [{ pool }, { reserveChatUsage }] = await Promise.all([
-        import("@workspace/db"),
-        import("@workspace/db/chat-quota"),
-      ]);
-      // Shares the persistent assistant allowance; no audio or transcripts are stored.
-      // Reservation is conservative and is not refunded after a potentially billed attempt.
-      const quota = await reserveChatUsage(pool, {
-        subject: quotaSubject(config, request.headers, userId),
-        personalLimit: userId ? config.user : config.guest,
-        projectLimit: config.project,
-        projectTokenLimit: config.tokens,
-        tokens: voiceBudget(segments.length),
-      });
-      if (!quota.allowed)
-        return json(
-          {
-            error: limitMessage(ar ? "ar" : "en", quota.scope),
-            resetAt: quota.resetAt,
-          },
-          429,
-        );
-    }
     const transcript = await transcribeChunks(
       segments,
       ar ? "ar" : "en",
