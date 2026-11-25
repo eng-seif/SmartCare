@@ -61,25 +61,27 @@ export async function POST(request: Request) {
         400,
       );
     const token = auth?.slice(7);
-    let userId: string | undefined;
     if (isSupabaseConfigured()) {
       const sb = token
         ? createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!.trim(),
             { auth: { persistSession: false, autoRefreshToken: false } },
           )
         : await supabaseServer();
-      const { data, error } = await sb.auth.getUser(token);
+      const { error } = await sb.auth.getUser(token);
       if (error && (token || error.name !== "AuthSessionMissingError"))
         return json({ error: "Account verification failed" }, 401);
-      userId = data.user?.id;
     } else if (token)
       return json({ error: "Account verification unavailable" }, 503);
-    if (
-      !process.env.AI_INTEGRATIONS_GEMINI_BASE_URL ||
-      !process.env.AI_INTEGRATIONS_GEMINI_API_KEY
-    )
+    const hasGemini = Boolean(
+      process.env.AI_INTEGRATIONS_GEMINI_BASE_URL &&
+        process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+    );
+    const hasGroqWhisper = Boolean(
+      (process.env.GROQ_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY)?.trim(),
+    );
+    if (!hasGemini && !hasGroqWhisper)
       return json(
         {
           error: text(

@@ -29,7 +29,7 @@ export default async function CartPage() {
   const sb = await supabaseServer()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) redirect('/register')
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle()
   const { data } = await sb.from('cart_items').select('qty, product:products(*)')
   const items: { qty: number; product: Product }[] = (data ?? []).map((r: any) => ({ qty: r.qty as number, product: r.product as Product }))
   const c: string[] = profile?.conditions ?? []

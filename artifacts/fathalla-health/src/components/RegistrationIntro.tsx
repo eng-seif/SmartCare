@@ -20,7 +20,7 @@ export default function RegistrationIntro({ lang, configured = true, initialSeen
   }
   if (!show) return <div data-no-translate>
     <div className="max-w-3xl mx-auto px-6 pt-5"><button type="button" className="text-primary underline" onClick={() => { setFailed(false); setShow(true) }}>{ar ? 'شاهد شرح الاستخدام مرة أخرى' : 'Watch the usage guide again'}</button></div>
-    <fieldset disabled={!configured} className="min-w-0"><RegisterForm key={mode} initialMode={mode} /></fieldset>
+    <fieldset disabled={!configured} className="min-w-0"><RegisterForm key={mode} initialMode={mode} lang={lang} /></fieldset>
   </div>
   return <section data-no-translate dir={ar ? 'rtl' : 'ltr'} className="max-w-3xl mx-auto px-5 py-10">
     <div className="bg-surface-container-lowest border border-surface-variant rounded-2xl p-5 sm:p-8 flex flex-col gap-5">

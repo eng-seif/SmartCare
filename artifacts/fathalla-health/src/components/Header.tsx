@@ -70,7 +70,7 @@ import LangToggle from './LangToggle'
                 </span>
               </Link>
 
-              <AccountMenu user={user} />
+              <AccountMenu user={user} lang={lang} />
             </div>
           </div>
         </header>
@@ -79,7 +79,8 @@ import LangToggle from './LangToggle'
 
 
 
-function AccountMenu({ user }: { user: HeaderUser }) {
+function AccountMenu({ user, lang }: { user: HeaderUser; lang: 'en' | 'ar' }) {
+  const ar = lang === 'ar'
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -91,7 +92,7 @@ function AccountMenu({ user }: { user: HeaderUser }) {
     return () => { document.removeEventListener('pointerdown', down); document.removeEventListener('keydown', key) }
   }, [open])
   if (!user) return (
-    <Link href="/register" className="px-space-sm sm:px-space-md py-space-sm rounded-lg bg-primary-container text-white font-title-md text-title-md whitespace-nowrap text-sm sm:text-base">Sign in<span className="hidden sm:inline"> / Register</span></Link>
+    <Link href="/register" className="px-space-sm sm:px-space-md py-space-sm rounded-lg bg-primary-container text-white font-title-md text-title-md whitespace-nowrap text-sm sm:text-base">{ar ? 'دخول' : 'Sign in'}<span className="hidden sm:inline">{ar ? ' / تسجيل' : ' / Register'}</span></Link>
   )
   async function signOut() {
     await supabaseBrowser().auth.signOut()
@@ -101,15 +102,15 @@ function AccountMenu({ user }: { user: HeaderUser }) {
   return (
     <div className="relative shrink-0" ref={ref}>
       <button type="button" onClick={() => setOpen(!open)} aria-label="Account menu" aria-expanded={open} aria-haspopup="menu"
-        className="w-9 h-9 rounded-full bg-primary-container text-white font-bold ring-2 ring-primary/20">{(user.name || user.email)[0].toUpperCase()}</button>
+        className="w-9 h-9 rounded-full bg-primary-container text-on-primary font-bold ring-2 ring-primary/20">{(user.name || user.email || '?')[0].toUpperCase()}</button>
       {open && (
         <div className="fixed end-2 top-[4.5rem] sm:absolute sm:end-0 sm:top-full sm:mt-2 w-60 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-6rem)] overflow-y-auto bg-surface-container-lowest rounded-xl shadow-xl border border-surface-variant/60 p-space-sm flex flex-col z-50">
           <div className="px-space-sm pb-space-sm mb-space-xs border-b border-surface-variant/60">
             <p className="font-title-md text-title-md text-on-surface truncate">{user.name || user.email}</p>
             <p className="font-body-sm text-body-sm text-on-surface-variant truncate">{user.email}</p>
           </div>
-          <Link href="/profile" onClick={() => setOpen(false)} className={row}><span className="material-symbols-outlined text-xl">manage_accounts</span>Edit profile</Link>
-          <button type="button" onClick={signOut} className={`${row} text-error`}><span className="material-symbols-outlined text-xl">logout</span>Sign out</button>
+          <Link href="/profile" onClick={() => setOpen(false)} className={row}><span className="material-symbols-outlined text-xl">manage_accounts</span>{ar ? 'تعديل الملف الصحي' : 'Edit profile'}</Link>
+          <button type="button" onClick={signOut} className={`${row} text-error`}><span className="material-symbols-outlined text-xl">logout</span>{ar ? 'تسجيل الخروج' : 'Sign out'}</button>
         </div>
       )}
     </div>

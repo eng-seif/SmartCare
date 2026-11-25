@@ -20,7 +20,7 @@ export default function AddToCartButton({ productId, label = 'Add to Cart', icon
   }
   return (
     <button onClick={add} disabled={state === 'busy'} type="button"
-      className={`h-12 px-space-md rounded-lg text-white font-title-md text-title-md font-bold flex items-center justify-center gap-space-sm shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 ${state === 'done' ? 'bg-tertiary' : 'bg-primary-container hover:bg-primary-container/90'} ${className}`}>
+      className={`h-12 px-space-md rounded-lg text-on-primary font-title-md text-title-md font-bold flex items-center justify-center gap-space-sm shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 ${state === 'done' ? 'bg-tertiary' : 'bg-primary-container hover:bg-primary-container/90'} ${className}`}>
       <span className="material-symbols-outlined text-xl">{state === 'done' ? 'check_circle' : icon}</span>
       {state === 'done' ? 'Added!' : label}
     </button>

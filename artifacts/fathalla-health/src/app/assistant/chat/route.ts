@@ -94,16 +94,30 @@ export async function POST(request: Request) {
     );
   bucket.count++;
   buckets.set(key, bucket);
-  const apiKey =
-    process.env.GROQ_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const apiKey = (
+    process.env.GROQ_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+  )?.trim();
   const baseUrl = (
     process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ||
     "https://api.groq.com/openai/v1"
-  ).replace(/\/+$/, "");
-  const model =
+  )
+    .trim()
+    .replace(/\/+$/, "");
+  const isGroq = baseUrl.includes("groq.com");
+  const configuredModel = (
     process.env.AI_INTEGRATIONS_OPENAI_MODEL ||
     process.env.GROQ_MODEL ||
-    (baseUrl.includes("groq.com") ? "llama-3.3-70b-versatile" : "gpt-5.4-mini");
+    ""
+  ).trim();
+  const groqFallbacks = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"];
+  const modelsToTry = isGroq
+    ? [
+        ...(configuredModel && configuredModel !== "llama-3.3-70b-versatile"
+          ? [configuredModel]
+          : []),
+        ...groqFallbacks,
+      ].filter((m, i, arr) => arr.indexOf(m) === i)
+    : [configuredModel || "gpt-5.4-mini"];
 
   if (!apiKey)
     return json(
@@ -120,8 +134,8 @@ export async function POST(request: Request) {
       ? null
       : accessToken
         ? createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!.trim(),
             {
               global: { headers: { Authorization: `Bearer ${accessToken}` } },
               auth: { persistSession: false, autoRefreshToken: false },
@@ -136,28 +150,43 @@ export async function POST(request: Request) {
       },
       ...input.messages,
     ];
-    const providerResponse = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        max_completion_tokens: MAX_COMPLETION_TOKENS,
-        messages,
-      }),
-      signal: AbortSignal.any([request.signal, AbortSignal.timeout(35_000)]),
-    });
-    if (!providerResponse.ok) {
-      const errText = await providerResponse.text().catch(() => "");
-      throw new Error(`provider-${providerResponse.status}: ${errText.slice(0, 200)}`);
+    const signal =
+      typeof AbortSignal.any === "function"
+        ? AbortSignal.any([request.signal, AbortSignal.timeout(35_000)])
+        : request.signal;
+    let reply: string | undefined;
+    let lastErr = "";
+    for (const model of modelsToTry) {
+      const providerResponse = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_completion_tokens: MAX_COMPLETION_TOKENS,
+          messages,
+        }),
+        signal,
+      });
+      if (!providerResponse.ok) {
+        const errText = await providerResponse.text().catch(() => "");
+        lastErr = `provider-${providerResponse.status} (${model}): ${errText.slice(0, 200)}`;
+        if (providerResponse.status === 404 && isGroq) continue;
+        throw new Error(lastErr);
+      }
+      const response = (await providerResponse.json()) as {
+        choices?: Array<{ message?: { content?: string | null } }>;
+      };
+      const candidate = response.choices?.[0]?.message?.content?.trim();
+      if (candidate) {
+        reply = candidate;
+        break;
+      }
+      lastErr = `empty-response (${model})`;
     }
-    const response = (await providerResponse.json()) as {
-      choices?: Array<{ message?: { content?: string | null } }>;
-    };
-    const reply = response.choices?.[0]?.message?.content?.trim();
-    if (!reply) throw new Error("empty-response");
+    if (!reply) throw new Error(lastErr || "empty-response");
     return json({ reply, catalogAvailable: context.catalogAvailable });
   } catch (error) {
     if (error instanceof ChatContextError)

@@ -13,7 +13,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const sb = await supabaseServer()
   const { data: { user } } = await sb.auth.getUser()
-  const { data: profile } = user ? await sb.from('profiles').select('conditions, full_name').eq('id', user.id).single() : { data: null }
+  const { data: profile } = user ? await sb.from('profiles').select('conditions, full_name').eq('id', user.id).maybeSingle() : { data: null }
   const c: string[] = profile?.conditions ?? []
   const { data: p } = await sb.from('products').select('*').eq('id', id).single<Product>()
   if (!p) notFound()
