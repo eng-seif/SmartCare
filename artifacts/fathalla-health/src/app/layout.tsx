@@ -1,6 +1,6 @@
 import './globals.css'
 import './market-refresh.css'
-import { Inter, JetBrains_Mono, Cairo } from 'next/font/google'
+import { Inter, JetBrains_Mono, Cairo, DM_Sans } from 'next/font/google'
 import { cookies } from 'next/headers'
 import Translator from '@/components/Translator'
 import Header from '@/components/Header'
@@ -10,9 +10,10 @@ import LiveRefresh from '@/components/LiveRefresh'
 import { supabaseServer } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', weight: ['400', '500', '600', '700'] })
-const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo', weight: ['400', '500', '600', '700'] })
-const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono-jb', weight: ['600', '700'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', weight: ['400', '500', '600', '700'], display: 'swap' })
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans', weight: ['400', '500', '600', '700'], display: 'swap' })
+const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo', weight: ['400', '500', '600', '700'], display: 'swap' })
+const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono-jb', weight: ['600', '700'], display: 'swap' })
 export const metadata = { title: 'Fathalla Healthy Market - Clinical Glycemic Nutrition' }
 
 const THEME_SCRIPT = "(function(){var d=document.documentElement,m=document.cookie.match(/(?:^|; )theme=(light|dark)/),t=m&&m[1];if(!t){try{t=localStorage.getItem('theme')}catch(e){}}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';d.setAttribute('data-theme',t);d.style.colorScheme=t})()"
@@ -33,10 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   const cartCount = (cart ?? []).reduce((s: number, r: { qty: number }) => s + r.qty, 0)
   return (
-    <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className={`${inter.variable} ${mono.variable} ${cairo.variable}`} suppressHydrationWarning data-theme={themeCookie === 'dark' || themeCookie === 'light' ? themeCookie : undefined}>
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" precedence="default" />
-      </head>
+    <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className={`${inter.variable} ${dmSans.variable} ${mono.variable} ${cairo.variable}`} suppressHydrationWarning data-theme={themeCookie === 'dark' || themeCookie === 'light' ? themeCookie : undefined}>
       <body className="bg-surface font-body-md text-body-md text-on-surface antialiased">
         {/* Parser-executed scripts stay in the body, away from preview-injected head scripts. */}
         <script id="fathalla-theme-init" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
