@@ -100,7 +100,7 @@ export default function VoiceInput({ lang, disabled, draft, onText, onBusy }: {
       </button>
       {state === 'recording' && <button type="button" onClick={() => stop(true)} className="p-2 underline flex gap-1 items-center"><X size={14} />{t('إلغاء', 'Cancel')}</button>}
     </div>
-    <p className="text-xs text-on-surface-variant">{t('٣٠ ثانية بحد أقصى. يُرسل التسجيل إلى Gemini عبر Replit لتحويله لنص، ولا نحفظه في التطبيق. راجع النص قبل الإرسال. التحويل يستخدم طلبًا من حصة المساعد.', 'Up to 30 seconds. Audio goes to Gemini via Replit for transcription and is not stored by this app. Review the text before sending. Transcription uses one assistant allowance request.')}</p>
+    <p className="text-xs text-on-surface-variant">{t('٣٠ ثانية بحد أقصى. يُرسل التسجيل إلى Gemini لتحويله لنص، ولا نحفظه في التطبيق. راجع النص قبل الإرسال. التحويل يستخدم طلبًا من حصة المساعد.', 'Up to 30 seconds. Audio goes to Gemini for transcription and is not stored by this app. Review the text before sending. Transcription uses one assistant allowance request.')}</p>
     {error && <p role="alert" className="text-xs text-error">{error}</p>}
   </div>
 }

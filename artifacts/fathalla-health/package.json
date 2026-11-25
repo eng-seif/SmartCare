@@ -13,9 +13,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@google-cloud/storage": "^8.4.0",
     "@google/genai": "^3.0.0",
-    "@replit/connectors-sdk": "^0.4.3",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.117.2",
     "barcode-detector": "^3.0.0",
