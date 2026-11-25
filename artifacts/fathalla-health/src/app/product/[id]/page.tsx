@@ -63,13 +63,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     [ar ? 'التقييم الصحي' : 'Health Score', nutrition(p.health_score), '/100'],
   ]
   const nutrients = [
-    [ar ? 'السكر' : 'Sugar', nutrition(p.sugar_content, 'g')],
-    [ar ? 'صافي الكربوهيدرات' : 'Net Carbs', nutrition(p.net_carbs, 'g')],
-    [ar ? 'الصوديوم' : 'Sodium', nutrition(p.sodium_content, 'mg')],
-    [
-      ar ? 'اللاكتوز / الجلوتين' : 'Lactose / Gluten',
-      `${p.is_lactose_free === true ? (ar ? 'خالٍ من اللاكتوز' : 'Lactose-free') : p.is_lactose_free === false ? (ar ? 'يحتوي لاكتوز' : 'Has lactose') : (ar ? 'غير محدد' : 'Lactose unknown')} · ${p.is_gluten_free === true ? (ar ? 'خالٍ من الجلوتين' : 'Gluten-free') : p.is_gluten_free === false ? (ar ? 'يحتوي جلوتين' : 'Has gluten') : (ar ? 'غير محدد' : 'Gluten unknown')}`,
-    ],
+    { label: ar ? 'السكر' : 'Sugar', value: nutrition(p.sugar_content, 'g'), mono: true },
+    { label: ar ? 'صافي الكربوهيدرات' : 'Net Carbs', value: nutrition(p.net_carbs, 'g'), mono: true },
+    { label: ar ? 'الصوديوم' : 'Sodium', value: nutrition(p.sodium_content, 'mg'), mono: true },
+    {
+      label: ar ? 'اللاكتوز / الجلوتين' : 'Lactose / Gluten',
+      value: `${p.is_lactose_free === true ? (ar ? 'خالٍ من اللاكتوز' : 'Lactose-free') : p.is_lactose_free === false ? (ar ? 'يحتوي لاكتوز' : 'Has lactose') : (ar ? 'غير محدد' : 'Lactose unknown')}\n${p.is_gluten_free === true ? (ar ? 'خالٍ من الجلوتين' : 'Gluten-free') : p.is_gluten_free === false ? (ar ? 'يحتوي جلوتين' : 'Has gluten') : (ar ? 'غير محدد' : 'Gluten unknown')}`,
+      mono: false,
+    },
   ]
 
   return (
@@ -93,7 +94,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <span className={`font-label-sm text-label-sm uppercase tracking-wider font-bold ${t.text}`}>
                   {ar ? 'الحكم الصحي للمنتج' : 'Health Verdict'}
                 </span>
-                <h1 className="font-headline-sm text-headline-sm text-on-surface">{tx(t.title)}</h1>
+                <h1 className="font-headline-sm text-headline-sm text-on-surface">{ar ? t.titleAr : t.title}</h1>
                 {!user && (
                   <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
                     {ar ? 'سجّل الدخول وأنشئ ملفًا صحيًا لتخصيص التقييم لحالتك.' : 'Create a health profile to personalize this verdict.'}
@@ -136,10 +137,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               )}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-md">
-              {nutrients.map(([k, v]) => (
-                <div key={k} className="flex flex-col gap-0.5 p-space-sm rounded-lg bg-surface-container-low min-w-0">
-                  <span className="font-label-sm text-label-sm text-secondary">{k}</span>
-                  <span className="font-metric-display text-body-md text-on-surface break-words">{v}</span>
+              {nutrients.map(item => (
+                <div key={item.label} className="flex flex-col gap-1 p-space-sm rounded-lg bg-surface-container-low min-w-0">
+                  <span className="font-label-sm text-label-sm text-secondary">{item.label}</span>
+                  <span className={`${item.mono ? 'font-metric-display text-body-md' : 'font-body-sm text-body-sm leading-relaxed whitespace-pre-line font-semibold'} text-on-surface break-words`}>{item.value}</span>
                 </div>
               ))}
             </div>
@@ -150,7 +151,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm border border-surface-variant/40 flex flex-col gap-space-lg">
             <div className="relative w-full h-64 rounded-lg bg-surface-container-low overflow-hidden">
               {p.image_url && <img className="w-full h-full object-cover" src={p.image_url} alt={tx(p.title)} />}
-              <span className={`absolute top-space-sm end-space-sm px-space-sm py-0.5 rounded font-label-sm text-label-sm font-bold ${t.chip}`}>{tx(t.label)}</span>
+              <span className={`absolute top-space-sm end-space-sm px-space-sm py-0.5 rounded font-label-sm text-label-sm font-bold whitespace-nowrap ${t.chip}`}>{ar ? t.labelAr : t.label}</span>
             </div>
             <div className="flex flex-col gap-space-xs">
               <span className="font-label-sm text-label-sm text-secondary font-medium tracking-wide uppercase">

@@ -21,6 +21,12 @@
   transition: background-color .22s, color .22s;
 }
 .fh-refresh[dir="rtl"] { font-family: var(--font-cairo), var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif; }
+.fh-refresh[dir="rtl"] h1,
+.fh-refresh[dir="rtl"] h2,
+.fh-refresh[dir="rtl"] h3,
+.fh-refresh[dir="rtl"] .fh-brandname,
+.fh-refresh[dir="rtl"] .fh-brand-sub,
+.fh-refresh[dir="rtl"] .fh-eyebrow { letter-spacing: 0; }
 .fh-refresh *, .fh-refresh *::before, .fh-refresh *::after { box-sizing: border-box; }
 .fh-refresh button, .fh-refresh input { font: inherit; }
 .fh-refresh button:focus-visible, .fh-refresh input:focus-visible { outline: 3px solid #8f552f; outline-offset: 2px; }

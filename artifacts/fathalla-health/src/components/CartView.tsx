@@ -223,7 +223,7 @@ export default function CartView({
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="font-title-md text-title-md text-on-surface font-semibold">{tx(p.title)}</span>
                     <div className="flex items-center gap-space-xs">
-                      <HealthBadge verdict={evaluate(p, conditions).verdict} />
+                      <HealthBadge verdict={evaluate(p, conditions).verdict} lang={lang} />
                       <span className="text-secondary font-label-sm">
                         {Number(p.price).toFixed(2)} {ar ? 'للقطعة' : 'each'}
                       </span>
